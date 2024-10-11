@@ -1,12 +1,22 @@
 #include <iostream>
-#include <limits>
+
+// Function-like macro that evaluates to true if the type (or object) is equal
+// to or smaller than the size of two memory addresses
+#define isSmall(T) (sizeof(T) <= 2 * sizeof(void *))
+
+struct S {
+  double a;
+  double b;
+  double c;
+};
 
 int main() {
+  std::cout << std::boolalpha;       // print true or false rather than 1 or 0
+  std::cout << isSmall(int) << '\n'; // true
 
-  std::cout << std::numeric_limits<int>::max() << std::endl;      // 231 − 1
-  std::cout << std::numeric_limits<uint16_t>::max() << std::endl; // 65, 535
-  std::cout << std::numeric_limits<int>::min() << std::endl;      // −231
-  std::cout << std::numeric_limits<unsigned>::min() << std::endl; // 0
+  double d{};
+  std::cout << isSmall(d) << '\n'; // true
+  std::cout << isSmall(S) << '\n'; // false
 
   return 0;
 }
