@@ -1,262 +1,169 @@
 
+#include <cmath>
 #include <iostream>
 #include <string>
 
-// learncpp.com: section 12.12- Return by Reference and Return by Address
-
-/* // ############################################
-// returns a reference that is bound to the object being returned, which avoids
-// making a copy of the return value. To return by reference, we simply define
-// the return value of the function to be a reference type
-// * std::string &returnByReference(); // returns a reference to an existing
-// std::string (cheap)
-//
-// * const std::string& returnByReferenceToConst(); // returns a const reference
-// to an existing std::string (cheap)
-
-const std::string &getProgramName() // returns a const reference
+// learncpp.com: section 12.13- In and Out Parameters
+// ###############################top########################################
+/* // * Parameters that are used only for receiving input from the caller are
+// sometimes called in parameters
+// * In-parameters are typically passed by value or by const reference.
+void print(int x) // x is an in parameter
 {
-  static const std::string s_programName{
-      "Calculator"}; // has static duration, destroyed at end of program
-
-  return s_programName;
+  std::cout << x << '\n';
 }
 
-int main() {
-  std::cout << "This program is named " << getProgramName();
-
-  return 0;
-}
-// * Using return by reference has one major caveat: the programmer must be sure
-// that the object being referenced outlives the function returning the
-// reference. Otherwise, the reference being returned will be left dangling
-// (referencing an object that has been destroyed), and use of that reference
-// will result in undefined behavior
- */
-
-// ####################################################################
-/* // function returns a dangling reference:
-const std::string &getProgramName() {
-  const std::string programName{
-      "Calculator"}; // now a non-static local variable, destroyed when function
-                     // ends
-
-  return programName;
-}
-
-int main() {
-  std::cout << "This program is named "
-            << getProgramName(); // undefined behavior
-
-  return 0;
-}
- */
-
-// ########################bottom###############################################
-
-// ###########################top############################################
-/* // Return a temporary by Reference
-const int &returnByConstReference() {
-  return 5; // returns const reference to temporary object
-}
-
-int main() {
-  const int &ref{returnByConstReference()};
-
-  std::cout << ref; // undefined behavior
-
-  return 0;
-}
-// returning an integer literal, but the return type of the function is const
-// int&. This results in the creation and return of a temporary reference bound
-// to a temporary object holding value 5. This returned reference is copied into
-// a temporary reference in the scope of the caller. The temporary object then
-// goes out of scope, leaving the temporary reference in the scope of the caller
-// dangling */
-
-// ###############################bottom########################################
-
-// ###############################top########################################
-/* const int &returnByConstReference(const int &ref) { return ref; }
-
-int main() {
-  // case 1: direct binding
-  const int &ref1{5};        // extends lifetime
-  std::cout << ref1 << '\n'; // okay
-
-  // case 2: indirect binding
-  const int &ref2{returnByConstReference(5)}; // binds to dangling reference
-  std::cout << ref2 << '\n';                  // undefined behavior
-
-  return 0;
-}
-// WARNING: Reference lifetime extension does not work across function
-// boundaries.
- */
-
-//  #################################bottom######################################
-
-//  ###############################top########################################
-/* // Don't return non-const static local variables by reference
-// * returning non-const static local variables by reference is fairly
-// non-idiomatic, and should generally be avoided
-const int &getNextId() {
-  static int s_x{0}; // note: variable is non-const
-  std::cout << "s_x: " << s_x << std::endl;
-  ++s_x; // generate the next id
-  std::cout << "s_x: " << s_x << std::endl;
-  return s_x; // and return a reference to it
-}
-
-int main() {
-  const int &id1{getNextId()}; // id1 is a reference
-  int i_id1 = id1;
-  const int &id2{getNextId()}; // id2 is a reference
-  int i_id2 = id2;
-
-  std::cout << id1 << "---" << id2 << '\n';
-  std::cout << "Works: " << i_id1 << "---" << i_id2 << '\n';
-
-  return 0;
-}
-// * id1 and id2 are referencing the same object (the static variable s_x), so
-// when anything (e.g. getNextId()) modifies that value, all references are now
-// accessing the modified value
-// * fixed by making id1 and id2 normal variables (rather than references) so
-// they save a copy of the return value rather than a reference
- */
-// #################################bottom######################################
-
-// ###############################top########################################
-// Correct way from above example (using a normal variable)
-/* const int &getNextId() {
-  static int s_x{0};
-  ++s_x;
-  return s_x;
-}
-
-int main() {
-  const int id1{
-      getNextId()}; // id1 is a normal variable now and receives a copy of the
-                    // value returned by reference from getNextId()
-  const int id2{
-      getNextId()}; // id2 is a normal variable now and receives a copy of the
-                    // value returned by reference from getNextId()
-
-  std::cout << id1 << id2 << '\n';
-
-  return 0;
-} */
-// #################################bottom######################################
-
-// ###############################top########################################
-/* // Dangling Reference
-#include <iostream>
-#include <string>
-
-const std::string &getProgramName() // will return a const reference
+void print(const std::string &s) // s is an in parameter
 {
-  const std::string programName{"Calculator"};
-
-  return programName;
+  std::cout << s << '\n';
 }
 
 int main() {
-  std::string name{getProgramName()}; // makes a copy of a dangling reference
-  std::cout << "This program is named " << name << '\n'; // undefined behavior
+  print(5);
+  std::string s{"Hello, world!"};
+  print(s);
+
+  return 0;
+} */
+// #################################bottom######################################
+// ###############################top########################################
+/* //* A function parameter that is used only for the purpose of returning
+// information back to the caller is called an out parameter.
+
+// sinOut and cosOut are out parameters
+void getSinCos(double degrees, double &sinOut, double &cosOut) {
+  // sin() and cos() take radians, not degrees, so we need to convert
+  constexpr double pi{3.14159265358979323846}; // the value of pi
+  double radians = degrees * pi / 180.0;
+  sinOut = std::sin(radians);
+  cosOut = std::cos(radians);
+}
+
+int main() {
+  double sin{0.0};
+  double cos{0.0};
+
+  double degrees{};
+  std::cout << "Enter the number of degrees: ";
+  std::cin >> degrees;
+
+  // getSinCos will return the sin and cos in variables sin and cos
+  getSinCos(degrees, sin, cos);
+
+  std::cout << "The sin is " << sin << '\n';
+  std::cout << "The cos is " << cos << '\n';
+
+  return 0;
+} */
+// out parameters with the suffix “out” to denote that they’re out parameters.
+// This helps remind the caller that the initial value passed to these
+// parameters doesn’t matter, and that we should expect them to be overwritten.
+// By convention, output parameters are typically the rightmost parameters
+
+// #################################bottom######################################
+
+// ###############################top########################################
+/*
+// * First, the caller must instantiate (and initialize) objects and pass them
+as
+// arguments, even if it doesn’t intend to use them. These objects must be able
+// to be assigned to, which means they can’t be made const.
+// * Second, because the caller must pass in objects, these values can’t be used
+// as temporaries, or easily used in a single expression.
+int getByValue() { return 5; }
+
+void getByReference(int &x) { x = 5; }
+
+int main() {
+  // return by value
+  [[maybe_unused]] int x{getByValue()}; // can use to initialize object
+  std::cout << getByValue()
+            << '\n'; // can use temporary return value in expression
+
+  // return by out parameter
+  int y{};                // must first allocate an assignable object
+  getByReference(y);      // then pass to function to assign the desired value
+  std::cout << y << '\n'; // and only then can we use that value
 
   return 0;
 } */
 // #################################bottom######################################
 
 // ###############################top########################################
-/* // If a parameter is passed into a function by reference, it’s safe to return
-// that parameter by reference. This makes sense: in order to pass an argument
-// to a function, the argument must exist in the scope of the caller. When the
-// called function returns, that object must still exist in the scope of the
-// caller.
+/* // It is not clear from this function call(getSinCos(degrees, sin, cos);)
+that
+// degrees is an in parameter, but sin and cos are out-parameters. If the caller
+// does not realize that sin and cos will be modified, a semantic error will
+// likely result.
 
-// Takes two std::string objects, returns the one that comes first
-// alphabetically
-const std::string &firstAlphabetical(const std::string &a,
-                                     const std::string &b) {
-  return (a < b) ? a : b; // We can use operator< on std::string to determine
-                          // which comes first alphabetically
-}
-
-int main() {
-  std::string hello{"Hello"};
-  std::string world{"World"};
-
-  std::cout << firstAlphabetical(hello, world) << '\n';
-
-  return 0;
-}
- */
-// #################################bottom######################################
-
-// ###############################top########################################
-/* // * When an argument for a const reference parameter is an rvalue, it’s
-still
-// okay to return that parameter by const reference.
-
-// This is because rvalues are not destroyed until the end of the full
-// expression in which they are created.
-std::string getHello() { return std::string{"Hello"}; }
+// Using pass by address instead of pass by reference can in some case help make
+// out-parameters more obvious by requiring the caller to pass in the address of
+// objects as arguments.
+void foo1(int x);  // pass by value
+void foo2(int &x); // pass by reference
+void foo3(int *x); // pass by address
 
 int main() {
-  const std::string s{getHello()};
+  int i{};
 
-  std::cout << s;
+  foo1(i);  // can't modify i
+  foo2(i);  // can modify i (not obvious)
+  foo3(&i); // can modify i
 
-  return 0;
-}
-// In this case, getHello() returns a std::string by value, which is an rvalue.
-// This rvalue is then used to initialize s. After the initialization of s, the
-// expression in which the rvalue was created has finished evaluating, and the
-// rvalue is destroyed. */
-// #################################bottom######################################
-
-// ###############################top########################################
-/* // difference in this case is that the rvalue is passed by const reference to
-// foo() and then returned by const reference back to the caller before it is
-// used to initialize s. Everything else works identically.
-
-const std::string &foo(const std::string &s) { return s; }
-
-std::string getHello() { return std::string{"Hello"}; }
-
-int main() {
-  const std::string s{foo(getHello())};
-
-  std::cout << s;
+  int *ptr{&i};
+  foo3(ptr); // can modify i (not obvious)
+  // *** out-parameters should be avoided unless no other good options exist.
 
   return 0;
 } */
+
+// #################################bottom######################################
+// ###############################top########################################
+
+/* // In rare cases, a function will actually use the value of an out-parameter
+// before overwriting its value. Such a parameter is called an in-out parameter.
+// In-out-parameters work identically to out-parameters and have all the same
+// challenges
+// #################################bottom######################################
+// ###############################top########################################
+// it’s often more straightforward and performant to just modify that object
+void modifyFoo(int &inout) {
+  // modify inout
+}
+
+int main() {
+  int foo{};
+  modifyFoo(foo); // foo modified after this call, slightly more obvious
+
+  return 0;
+} */
+
 // #################################bottom######################################
 
 // ###############################top########################################
-// takes two integers by non-const reference, and returns the greater by
-// reference
-int &max(int &x, int &y) { return (x > y) ? x : y; }
+// alternative is to pass the object by value or const reference instead (as per
+// usual) and return a new object by value, which the caller can then assign
+// back to the original object:
+int someFcn(const int &in) {
+  int foo{in}; // copy here
+  // modify foo
+  return foo;
+}
 
 int main() {
-  int a{5};
-  int b{6};
-
-  max(a, b) = 7; // sets the greater of a or b to 7
-
-  std::cout << a << b << '\n';
+  int foo{};
+  foo = someFcn(
+      foo); // makes it obvious foo is modified, but another copy made here
 
   return 0;
 }
-// #################################bottom######################################
-
-// ###############################top########################################
-
-// #################################bottom######################################
-
-// ###############################top########################################
+// * This has the benefit of using a more conventional return syntax, but
+// requires making 2 extra copies (sometimes the compiler can optimize one of
+// these copies away).
+// * Second, use pass by non-const reference when a function would
+// otherwise return an object by value to the caller, but making a copy of that
+// object is extremely expensive. Especially if the function is called many
+// times in a performance-critical section of code.
 
 // #################################bottom######################################
 
