@@ -1,184 +1,228 @@
 
-#include <cmath>
 #include <iostream>
 #include <string>
 
-// learncpp.com: section 12.13- In and Out Parameters
+// learncpp.com: section 12.14- Type deduction with Pointers, References, and
+// const
+
 // ###############################top########################################
-/* // * Parameters that are used only for receiving input from the caller are
-// sometimes called in parameters
-// * In-parameters are typically passed by value or by const reference.
-void print(int x) // x is an in parameter
-{
-  std::cout << x << '\n';
-}
-
-void print(const std::string &s) // s is an in parameter
-{
-  std::cout << s << '\n';
-}
-
 int main() {
-  print(5);
-  std::string s{"Hello, world!"};
-  print(s);
+  int a{5};
+  auto b{a}; // b deduced as an int
 
   return 0;
-} */
-// #################################bottom######################################
-// ###############################top########################################
-/* //* A function parameter that is used only for the purpose of returning
-// information back to the caller is called an out parameter.
-
-// sinOut and cosOut are out parameters
-void getSinCos(double degrees, double &sinOut, double &cosOut) {
-  // sin() and cos() take radians, not degrees, so we need to convert
-  constexpr double pi{3.14159265358979323846}; // the value of pi
-  double radians = degrees * pi / 180.0;
-  sinOut = std::sin(radians);
-  cosOut = std::cos(radians);
 }
-
-int main() {
-  double sin{0.0};
-  double cos{0.0};
-
-  double degrees{};
-  std::cout << "Enter the number of degrees: ";
-  std::cin >> degrees;
-
-  // getSinCos will return the sin and cos in variables sin and cos
-  getSinCos(degrees, sin, cos);
-
-  std::cout << "The sin is " << sin << '\n';
-  std::cout << "The cos is " << cos << '\n';
-
-  return 0;
-} */
-// out parameters with the suffix “out” to denote that they’re out parameters.
-// This helps remind the caller that the initial value passed to these
-// parameters doesn’t matter, and that we should expect them to be overwritten.
-// By convention, output parameters are typically the rightmost parameters
-
 // #################################bottom######################################
-
-// ###############################top########################################
 /*
-// * First, the caller must instantiate (and initialize) objects and pass them
-as
-// arguments, even if it doesn’t intend to use them. These objects must be able
-// to be assigned to, which means they can’t be made const.
-// * Second, because the caller must pass in objects, these values can’t be used
-// as temporaries, or easily used in a single expression.
-int getByValue() { return 5; }
-
-void getByReference(int &x) { x = 5; }
-
-int main() {
-  // return by value
-  [[maybe_unused]] int x{getByValue()}; // can use to initialize object
-  std::cout << getByValue()
-            << '\n'; // can use temporary return value in expression
-
-  // return by out parameter
-  int y{};                // must first allocate an assignable object
-  getByReference(y);      // then pass to function to assign the desired value
-  std::cout << y << '\n'; // and only then can we use that value
-
-  return 0;
-} */
-// #################################bottom######################################
-
 // ###############################top########################################
-/* // It is not clear from this function call(getSinCos(degrees, sin, cos);)
-that
-// degrees is an in parameter, but sin and cos are out-parameters. If the caller
-// does not realize that sin and cos will be modified, a semantic error will
-// likely result.
-
-// Using pass by address instead of pass by reference can in some case help make
-// out-parameters more obvious by requiring the caller to pass in the address of
-// objects as arguments.
-void foo1(int x);  // pass by value
-void foo2(int &x); // pass by reference
-void foo3(int *x); // pass by address
-
 int main() {
-  int i{};
+  const double a{7.8}; // a has type const double
+  auto b{a};           // b has type double (const dropped)
 
-  foo1(i);  // can't modify i
-  foo2(i);  // can modify i (not obvious)
-  foo3(&i); // can modify i
-
-  int *ptr{&i};
-  foo3(ptr); // can modify i (not obvious)
-  // *** out-parameters should be avoided unless no other good options exist.
-
-  return 0;
-} */
-
-// #################################bottom######################################
-// ###############################top########################################
-
-/* // In rare cases, a function will actually use the value of an out-parameter
-// before overwriting its value. Such a parameter is called an in-out parameter.
-// In-out-parameters work identically to out-parameters and have all the same
-// challenges
-// #################################bottom######################################
-// ###############################top########################################
-// it’s often more straightforward and performant to just modify that object
-void modifyFoo(int &inout) {
-  // modify inout
-}
-
-int main() {
-  int foo{};
-  modifyFoo(foo); // foo modified after this call, slightly more obvious
-
-  return 0;
-} */
-
-// #################################bottom######################################
-
-// ###############################top########################################
-// alternative is to pass the object by value or const reference instead (as per
-// usual) and return a new object by value, which the caller can then assign
-// back to the original object:
-int someFcn(const int &in) {
-  int foo{in}; // copy here
-  // modify foo
-  return foo;
-}
-
-int main() {
-  int foo{};
-  foo = someFcn(
-      foo); // makes it obvious foo is modified, but another copy made here
+  constexpr double c{
+      7.8};  // c has type const double (constexpr implicitly applies const)
+  auto d{c}; // d has type double (const dropped)
 
   return 0;
 }
-// * This has the benefit of using a more conventional return syntax, but
-// requires making 2 extra copies (sometimes the compiler can optimize one of
-// these copies away).
-// * Second, use pass by non-const reference when a function would
-// otherwise return an object by value to the caller, but making a copy of that
-// object is extremely expensive. Especially if the function is called many
-// times in a performance-critical section of code.
-
 // #################################bottom######################################
+
+// ###############################top########################################
+int main() {
+  double a{7.8};   // a has type double
+  const auto b{a}; // b has type const double (const applied)
+
+  constexpr double c{
+      7.8}; // c has type const double (constexpr implicitly applies const)
+  const auto d{c}; // d is const double (const dropped, const reapplied)
+  constexpr auto e{
+      c}; // e is constexpr double (const dropped, constexpr reapplied)
+
+  return 0;
+}
+// #################################bottom######################################
+
+// ###############################top########################################
+#include <string>
+
+std::string &getRef(); // some function that returns a reference
+
+int main() {
+  auto ref{getRef()}; // type deduced as std::string (not std::string&)
+
+  return 0;
+}
+// #################################bottom######################################
+
+// ###############################top########################################
+#include <string>
+
+std::string &getRef(); // some function that returns a reference
+
+int main() {
+  auto ref1{getRef()};  // std::string (reference dropped)
+  auto &ref2{getRef()}; // std::string& (reference dropped, reference reapplied)
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+const int x;    // this const applies to x, so it is top-level
+int *const ptr; // this const applies to ptr, so it is top-level
+
+const int &ref; // this const applies to the object being referenced, so it is
+                // low-level
+const int *ptr; // this const applies to the object being pointed to, so it is
+                // low-level
+
+const int
+    *const ptr; // the left const is low-level, the right const is top-level
+// #################################bottom######################################
+// ###############################top########################################
+#include <string>
+
+const std::string &
+getConstRef(); // some function that returns a reference to const
+
+int main() {
+  auto ref1{getConstRef()}; // std::string (reference dropped, then top-level
+                            // const dropped from result)
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+#include <string>
+
+const std::string &
+getConstRef(); // some function that returns a const reference
+
+int main() {
+  auto ref1{
+      getConstRef()}; // std::string (reference and top-level const dropped)
+  const auto ref2{getConstRef()}; // const std::string (reference dropped, const
+                                  // dropped, const reapplied)
+
+  auto &ref3{getConstRef()};       // const std::string& (reference dropped and
+                                   // reapplied, low-level const not dropped)
+  const auto &ref4{getConstRef()}; // const std::string& (reference dropped and
+                                   // reapplied, low-level const not dropped)
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+#include <iostream>
+#include <string_view>
+
+constexpr std::string_view hello{"Hello"}; // implicitly const
+
+constexpr const std::string_view &
+getConstRef() // function is constexpr, returns a const std::string_view&
+{
+  return hello;
+}
+
+int main() {
+  auto ref1{getConstRef()}; // std::string_view (reference dropped and top-level
+                            // const dropped)
+  constexpr auto ref2{
+      getConstRef()}; // constexpr const std::string_view (reference dropped and
+                      // top-level const dropped, constexpr applied, implicitly
+                      // const)
+
+  auto &ref3{getConstRef()}; // const std::string_view& (reference reapplied,
+                             // low-level const not dropped)
+  constexpr const auto &ref4{
+      getConstRef()}; // constexpr const std::string_view& (reference reapplied,
+                      // low-level const not dropped, constexpr applied)
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+#include <string>
+
+std::string *getPtr(); // some function that returns a pointer
+
+int main() {
+  auto ptr1{getPtr()}; // std::string*
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+#include <string>
+
+std::string *getPtr(); // some function that returns a pointer
+
+int main() {
+  auto ptr1{getPtr()};  // std::string*
+  auto *ptr2{getPtr()}; // std::string*
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+#include <string>
+
+std::string *getPtr(); // some function that returns a pointer
+
+int main() {
+  auto ptr3{*getPtr()};  // std::string (because we dereferenced getPtr())
+  auto *ptr4{*getPtr()}; // does not compile (initializer not a pointer)
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+#include <string>
+
+std::string *getPtr(); // some function that returns a pointer
+
+int main() {
+  const auto ptr1{getPtr()}; // std::string* const
+  auto const ptr2{getPtr()}; // std::string* const
+
+  const auto *ptr3{getPtr()}; // const std::string*
+  auto *const ptr4{getPtr()}; // std::string* const
+
+  return 0;
+}
+// #################################bottom######################################
+// ###############################top########################################
+#include <string>
+
+int main() {
+  std::string s{};
+  const std::string *const ptr{&s};
+
+  auto ptr1{ptr};  // const std::string*
+  auto *ptr2{ptr}; // const std::string*
+
+  auto const ptr3{ptr}; // const std::string* const
+  const auto ptr4{ptr}; // const std::string* const
+
+  auto *const ptr5{ptr}; // const std::string* const
+  const auto *ptr6{ptr}; // const std::string*
+
+  const auto const ptr7{ptr};  // error: const qualifer can not be applied twice
+  const auto *const ptr8{ptr}; // const std::string* const
+
+  return 0;
+}
+// #################################bottom######################################
+*/
 
 // ###############################top########################################
 
 // #################################bottom######################################
-
 // ###############################top########################################
 
 // #################################bottom######################################
-
 // ###############################top########################################
 
 // #################################bottom######################################
-
 // ###############################top########################################
 
 // #################################bottom######################################
