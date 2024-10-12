@@ -1,95 +1,133 @@
-#include <cstddef> // for NUL
+#include <cassert>
 #include <iostream>
+#include <string>
 
-// 12.9- Pointers and Const
+// Learncpp.com: Section 12.11- Pass by Address (Part 1)
+
+/* //
+################################################################################
+//  sample program that shows a std::string object being passed by value and
+//  by reference
+void printByValue(std::string val) // The function parameter is a copy of str
+{
+  std::cout << val << '\n'; // print the value via the copy
+}
+
+// *  Because our reference parameter is const, we are not allowed to change
+// ref. But if ref were non-const, any changes we made to ref would change str
+void printByReference(const std::string &ref) // The function parameter is a
+                                              // reference that binds to str
+{
+  std::cout << ref << '\n'; // print the value via the reference
+}
+
+// Since printByAddress() will use ptr in a read-only manner, ptr is a pointer
+// to a const value
+void printByAddress(
+    const std::string *ptr) // The function parameter is a pointer that holds
+                            // the address of str
+{
+  std::cout << *ptr << '\n'; // print the value via the dereferenced pointer
+}
+
+void changeValue(const int *ptr) // note: ptr is now a pointer to a const
+{
+  //*ptr = 6; // error: can not change const value
+}
 
 int main() {
+  std::string str{"Hello, world!"};
 
-  // const int x{5}; // x is now const
-  //  int *ptr{&x};   // compile error: cannot convert from const int* to int*
+  printByValue(str);     // pass str by value, makes a copy of str
+  printByReference(str); // pass str by reference, does not make a copy of str
+  printByAddress(&str);  // pass str by address, does not make a copy of str
 
-  /////////////////////////////////
-  // To declare a pointer to a const value, use the const keyword before the
-  // pointer’s data type
-  // const int x{5};
-  // const int *c_ptr{&x}; // okay: ptr is pointing to a "const int"
+  // if we already had a pointer variable holding address of str, could do this
+  // instead:
+  std::string *ptr{
+      &str};           // define a pointer variable holding the address of str
+  printByAddress(ptr); // pass str by address, does not make a copy of str
 
-  //*c_ptr = 6; // not allowed: we can't change a const value
-  // * Because the data type being pointed to is const, the value being pointed
-  // to can’t be changed.
-  // * because a pointer to const is not const itself (it just points to a const
-  // value), we can change what the pointer is pointing at by assigning the
-  // pointer a new address:
-  // const int x{5};
-  // const int *cptr{&x}; // ptr points to const int x
+  return 0;
+}
+ */
 
-  // const int y{6};
-  // cptr = &y; // okay: ptr now points at const int y
+/*
+// #######################################################
+//  When passing a parameter by address, care should be taken to ensure the
+//  pointer is not a null pointer before you dereference the value. One way to
+//  do that is to use a conditional statement:
+void print(int *ptr) {
+  if (ptr) // if ptr is not a null pointer
+  {
+    std::cout << *ptr << '\n';
+  }
+}
 
-  ///////////////////////////////////////////
-  // * pointer to const can point to non-const variables too
-  // int x{5};           // non-const
-  // const int *ptr{&x}; // ptr points to a "const int"
+// In most cases, it is more effective to do the opposite: test whether the
+// function parameter is null as a precondition (9.6 -- Assert and
+// static_assert) and handle the negative case immediately:
+void ntest_print(int *ptr) {
+  // assert can be used instead
+  // assert(ptr); // // fail the program in debug mode if a null pointer is
+  // passed
+  // (since this should never happen)
 
-  //*ptr = 6; // not allowed: ptr points to a "const int" so we can't change the
-  // value through ptr
-  // x = 6; // allowed: the value is still non-const when accessed through
-  // non-const identifier x
+  //// (optionally) handle this as an error case in production mode so we don't
+  /// crash if it does happen
+  if (!ptr)
+    return; // if ptr is a null pointer, early return back to the caller
 
-  // #####################################################################
-  ////////////////////////////////////////////////////////
-  // A const pointer is a pointer whose address can not be changed after
-  // initialization
-  ///////////////////////////////////////////////////////////
+  // if we reached this point, we can assume ptr is valid
+  // so no more testing or nesting required
+
+  std::cout << *ptr << '\n';
+}
+int main() {
   int x{5};
-  // int *const ptr{&x}; // const after the asterisk means this is a const
-  // pointer
-  //  * Just like a normal const variable, a const pointer must be initialized
-  //  upon definition, and this value can’t be changed via assignment:
-  int y{6};
 
-  // int *const ptr{&x};  // okay: the const pointer is initialized to the
-  // address of x
-  // ptr = &y; // error: once initialized, a const pointer can not be changed.
-  //*ptr = 6; // okay: the value being pointed to is non-const
+  print(&x);
+  print(nullptr);
+  ntest_print(&x);
+  ntest_print(nullptr);
 
-  // #####################################################################
-  ////////////////////////////////////////////////////////
-  // * it is possible to declare a const pointer to a const value by using the
-  // const keyword both before the type and after the asterisk:
-  int value{5};
-  const int *const ptr{&value}; // a const pointer to a const value
-  // A const pointer to a const value can not have its address changed, nor can
-  // the value it is pointing to be changed through the pointer. It can only be
-  // dereferenced to get the value it is pointing at.
+  return 0;
+}
+ */
 
-  // you only need to remember 4 rules, and they are pretty logical:
+// #########################################################
+// “Pass by reference when you can, pass by address when you must”
+// ################################################################
+// * Prefer Pass by (const) Reference-  has a few other advantages over pass by
+// address
+// * because an object being passed by address must have an address, only
+// lvalues can be passed by address (as rvalues don’t have addresses). Pass by
+// const reference is more flexible, as it can accept lvalues and rvalues
+// * the syntax for pass by reference is natural, as we can just pass in
+// literals or objects. With pass by address, our code ends up littered with
+// ampersands (&) and asterisks (*).
 
-  // * A non-const pointer can be assigned another address to change what it is
-  // pointing at.
-  // * A const pointer always points to the same address, and this address can
-  // not be changed.
-  // * A pointer to a non-const value can change the value it is pointing to.
-  // These can not point to a const value.
-  // * A pointer to a const value treats the value as const when accessed
-  // through the pointer, and thus can not change the value it is pointing to.
-  // These can be pointed to const or non-const l-values (but not r-values,
-  // which don’t have an address).
+void printByValue(int val) // The function parameter is a copy of the argument
+{
+  std::cout << val << '\n'; // print the value via the copy
+}
 
-  int v{5};
+void printByReference(const int &ref) // The function parameter is a reference
+                                      // that binds to the argument
+{
+  std::cout << ref << '\n'; // print the value via the reference
+}
 
-  int *ptr0{&v}; // points to an "int" but is not const itself, so this is a
-                 // normal pointer.
-  const int *ptr1{&v}; // points to a "const int" but is not const itself, so
-                       // this is a pointer to a const value.
-  int *const ptr2{&v}; // points to an "int" and is const itself, so this is a
-                       // const pointer (to a non-const value).
-  const int *const ptr3{&v}; // points to a "const int" and is const itself, so
-                             // this is a const pointer to a const value.
+void printByAddress(const int *ptr) // The function parameter is a pointer that
+                                    // holds the address of the argument
+{
+  std::cout << *ptr << '\n'; // print the value via the dereferenced pointer
+}
 
-  // if the const is on the left side of the *, the const belongs to the value
-  // if the const is on the right side of the *, the const belongs to the
-  // pointer
+int main() {
+  printByValue(5);     // valid (but makes a copy)
+  printByReference(5); // valid (because the parameter is a const reference)
+  // printByAddress(&5);  // error: can't take address of r-value
 
   return 0;
 }
