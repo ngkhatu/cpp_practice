@@ -1,133 +1,111 @@
 #include <cassert>
+#include <cstddef> // for NULL
 #include <iostream>
 #include <string>
 
-// Learncpp.com: Section 12.11- Pass by Address (Part 1)
+// Learncpp.com: Section 12.11- Pass by Address (Part 2)
 
-/* //
-################################################################################
-//  sample program that shows a std::string object being passed by value and
-//  by reference
-void printByValue(std::string val) // The function parameter is a copy of str
-{
-  std::cout << val << '\n'; // print the value via the copy
-}
-
-// *  Because our reference parameter is const, we are not allowed to change
-// ref. But if ref were non-const, any changes we made to ref would change str
-void printByReference(const std::string &ref) // The function parameter is a
-                                              // reference that binds to str
-{
-  std::cout << ref << '\n'; // print the value via the reference
-}
-
-// Since printByAddress() will use ptr in a read-only manner, ptr is a pointer
-// to a const value
-void printByAddress(
-    const std::string *ptr) // The function parameter is a pointer that holds
-                            // the address of str
-{
-  std::cout << *ptr << '\n'; // print the value via the dereferenced pointer
-}
-
-void changeValue(const int *ptr) // note: ptr is now a pointer to a const
-{
-  //*ptr = 6; // error: can not change const value
+/* // ###################################################
+//  Pass by address for “optional” arguments
+void printIDNumber(const int *id = nullptr) {
+  if (id)
+    std::cout << "Your ID number is " << *id << ".\n";
+  else
+    std::cout << "Your ID number is not known.\n";
 }
 
 int main() {
-  std::string str{"Hello, world!"};
+  printIDNumber(); // we don't know the user's ID yet
 
-  printByValue(str);     // pass str by value, makes a copy of str
-  printByReference(str); // pass str by reference, does not make a copy of str
-  printByAddress(&str);  // pass str by address, does not make a copy of str
-
-  // if we already had a pointer variable holding address of str, could do this
-  // instead:
-  std::string *ptr{
-      &str};           // define a pointer variable holding the address of str
-  printByAddress(ptr); // pass str by address, does not make a copy of str
+  int userid{34};
+  printIDNumber(&userid); // we know the user's ID now
 
   return 0;
 }
  */
 
 /*
-// #######################################################
-//  When passing a parameter by address, care should be taken to ensure the
-//  pointer is not a null pointer before you dereference the value. One way to
-//  do that is to use a conditional statement:
-void print(int *ptr) {
-  if (ptr) // if ptr is not a null pointer
-  {
-    std::cout << *ptr << '\n';
-  }
+// #########################################################
+//  in many cases, function overloading is a better alternative to achieve the
+//  same result:
+// * This has a number of advantages: we no longer have to worry about null
+// dereferences, and we can pass in literals or other rvalues as an argument.
+void printIDNumber() { std::cout << "Your ID is not known\n"; }
+
+void printIDNumber(int id) { std::cout << "Your ID is " << id << "\n"; }
+
+int main() {
+ printIDNumber(); // we don't know the user's ID yet
+
+ int userid{34};
+ printIDNumber(userid); // we know the user is 34
+
+ printIDNumber(62); // now also works with rvalue arguments
+
+ return 0;
+}
+*/
+/*
+// ##################################################################
+//  [[maybe_unused]] gets rid of compiler warnings about ptr2 being set but not
+//  used
+// * Changing what a pointer parameter points at
+
+// Function is only affecting the copy of the pointer.
+void nullify([[maybe_unused]] int *ptr2) {
+  ptr2 = nullptr; // Make the function parameter a null pointer
 }
 
-// In most cases, it is more effective to do the opposite: test whether the
-// function parameter is null as a precondition (9.6 -- Assert and
-// static_assert) and handle the negative case immediately:
-void ntest_print(int *ptr) {
-  // assert can be used instead
-  // assert(ptr); // // fail the program in debug mode if a null pointer is
-  // passed
-  // (since this should never happen)
-
-  //// (optionally) handle this as an error case in production mode so we don't
-  /// crash if it does happen
-  if (!ptr)
-    return; // if ptr is a null pointer, early return back to the caller
-
-  // if we reached this point, we can assume ptr is valid
-  // so no more testing or nesting required
-
-  std::cout << *ptr << '\n';
+void nullify2(int *&refptr) // refptr is now a reference to a pointer
+{
+  refptr = nullptr; // Make the function parameter a null pointer
 }
+
 int main() {
   int x{5};
+  int *ptr{&x}; // ptr points to x
 
-  print(&x);
-  print(nullptr);
-  ntest_print(&x);
-  ntest_print(nullptr);
+  std::cout << "ptr is " << (ptr ? "non-null\n" : "null\n");
+
+  nullify(ptr);
+
+  std::cout << "ptr is " << (ptr ? "non-null\n" : "null\n");
+
+  nullify2(ptr);
+  std::cout << "ptr is " << (ptr ? "non-null\n" : "null\n");
 
   return 0;
 }
+
  */
 
-// #########################################################
-// “Pass by reference when you can, pass by address when you must”
-// ################################################################
-// * Prefer Pass by (const) Reference-  has a few other advantages over pass by
-// address
-// * because an object being passed by address must have an address, only
-// lvalues can be passed by address (as rvalues don’t have addresses). Pass by
-// const reference is more flexible, as it can accept lvalues and rvalues
-// * the syntax for pass by reference is natural, as we can just pass in
-// literals or objects. With pass by address, our code ends up littered with
-// ampersands (&) and asterisks (*).
-
-void printByValue(int val) // The function parameter is a copy of the argument
+// #############################################################
+// When using 0 or NULL, this can cause problems:
+void print(int x) // this function accepts an integer
 {
-  std::cout << val << '\n'; // print the value via the copy
+  std::cout << "print(int): " << x << '\n';
 }
 
-void printByReference(const int &ref) // The function parameter is a reference
-                                      // that binds to the argument
+void print(int *ptr) // this function accepts an integer pointer
 {
-  std::cout << ref << '\n'; // print the value via the reference
-}
-
-void printByAddress(const int *ptr) // The function parameter is a pointer that
-                                    // holds the address of the argument
-{
-  std::cout << *ptr << '\n'; // print the value via the dereferenced pointer
+  std::cout << "print(int*): " << (ptr ? "non-null\n" : "null\n");
 }
 
 int main() {
-  printByValue(5);     // valid (but makes a copy)
-  printByReference(5); // valid (because the parameter is a const reference)
-  // printByAddress(&5);  // error: can't take address of r-value
+  int x{5};
+  int *ptr{&x};
+
+  print(ptr); // always calls print(int*) because ptr has type int* (good)
+  print(0);   // always calls print(int) because 0 is an integer literal
+              // (hopefully this is what we expected)
+
+  // print(NULL); // this statement could do any of the following:
+  //  call print(int) (Visual Studio does this)
+  //  call print(int*)
+  //  result in an ambiguous function call compilation error (gcc and Clang do
+  //  this)
+
+  print(nullptr); // always calls print(int*)
 
   return 0;
 }
