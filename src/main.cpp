@@ -1,228 +1,107 @@
+// learncpp.com: section 10.8- Type Deduction for objects using auto keyword
 
 #include <iostream>
-#include <string>
+int add(int x, int y) { return x + y; }
 
-// learncpp.com: section 12.14- Type deduction with Pointers, References, and
-// const
-
-// ###############################top########################################
 int main() {
-  int a{5};
-  auto b{a}; // b deduced as an int
-
+  auto sum{add(
+      5, 6)}; // add() returns an int, so sum's type will be deduced as an int
+  std::cout << sum << std::endl;
   return 0;
 }
-// #################################bottom######################################
+
 /*
-// ###############################top########################################
-int main() {
-  const double a{7.8}; // a has type const double
-  auto b{a};           // b has type double (const dropped)
+//Type deduction will not work for objects that either do not have initializers
+or have empty initializers. It also will not work when the initializer has type
+void (or any other incomplete type). Thus, the following is not valid:
 
-  constexpr double c{
-      7.8};  // c has type const double (constexpr implicitly applies const)
-  auto d{c}; // d has type double (const dropped)
-
-  return 0;
-}
-// #################################bottom######################################
-
-// ###############################top########################################
-int main() {
-  double a{7.8};   // a has type double
-  const auto b{a}; // b has type const double (const applied)
-
-  constexpr double c{
-      7.8}; // c has type const double (constexpr implicitly applies const)
-  const auto d{c}; // d is const double (const dropped, const reapplied)
-  constexpr auto e{
-      c}; // e is constexpr double (const dropped, constexpr reapplied)
-
-  return 0;
-}
-// #################################bottom######################################
-
-// ###############################top########################################
-#include <string>
-
-std::string &getRef(); // some function that returns a reference
-
-int main() {
-  auto ref{getRef()}; // type deduced as std::string (not std::string&)
-
-  return 0;
-}
-// #################################bottom######################################
-
-// ###############################top########################################
-#include <string>
-
-std::string &getRef(); // some function that returns a reference
-
-int main() {
-  auto ref1{getRef()};  // std::string (reference dropped)
-  auto &ref2{getRef()}; // std::string& (reference dropped, reference reapplied)
-
-  return 0;
-}
-// #################################bottom######################################
-// ###############################top########################################
-const int x;    // this const applies to x, so it is top-level
-int *const ptr; // this const applies to ptr, so it is top-level
-
-const int &ref; // this const applies to the object being referenced, so it is
-                // low-level
-const int *ptr; // this const applies to the object being pointed to, so it is
-                // low-level
-
-const int
-    *const ptr; // the left const is low-level, the right const is top-level
-// #################################bottom######################################
-// ###############################top########################################
-#include <string>
-
-const std::string &
-getConstRef(); // some function that returns a reference to const
-
-int main() {
-  auto ref1{getConstRef()}; // std::string (reference dropped, then top-level
-                            // const dropped from result)
-
-  return 0;
-}
-// #################################bottom######################################
-// ###############################top########################################
-#include <string>
-
-const std::string &
-getConstRef(); // some function that returns a const reference
-
-int main() {
-  auto ref1{
-      getConstRef()}; // std::string (reference and top-level const dropped)
-  const auto ref2{getConstRef()}; // const std::string (reference dropped, const
-                                  // dropped, const reapplied)
-
-  auto &ref3{getConstRef()};       // const std::string& (reference dropped and
-                                   // reapplied, low-level const not dropped)
-  const auto &ref4{getConstRef()}; // const std::string& (reference dropped and
-                                   // reapplied, low-level const not dropped)
-
-  return 0;
-}
-// #################################bottom######################################
-// ###############################top########################################
-#include <iostream>
-#include <string_view>
-
-constexpr std::string_view hello{"Hello"}; // implicitly const
-
-constexpr const std::string_view &
-getConstRef() // function is constexpr, returns a const std::string_view&
+void foo()
 {
-  return hello;
 }
 
-int main() {
-  auto ref1{getConstRef()}; // std::string_view (reference dropped and top-level
-                            // const dropped)
-  constexpr auto ref2{
-      getConstRef()}; // constexpr const std::string_view (reference dropped and
-                      // top-level const dropped, constexpr applied, implicitly
-                      // const)
+int main()
+{
+    auto a;           // The compiler is unable to deduce the type of a
+    auto b { };       // The compiler is unable to deduce the type of b
+    auto c { foo() }; // Invalid: c can't have type incomplete type void
 
-  auto &ref3{getConstRef()}; // const std::string_view& (reference reapplied,
-                             // low-level const not dropped)
-  constexpr const auto &ref4{
-      getConstRef()}; // constexpr const std::string_view& (reference reapplied,
-                      // low-level const not dropped, constexpr applied)
-
-  return 0;
+    return 0;
 }
-// #################################bottom######################################
-// ###############################top########################################
-#include <string>
-
-std::string *getPtr(); // some function that returns a pointer
-
-int main() {
-  auto ptr1{getPtr()}; // std::string*
-
-  return 0;
-}
-// #################################bottom######################################
-// ###############################top########################################
-#include <string>
-
-std::string *getPtr(); // some function that returns a pointer
-
-int main() {
-  auto ptr1{getPtr()};  // std::string*
-  auto *ptr2{getPtr()}; // std::string*
-
-  return 0;
-}
-// #################################bottom######################################
-// ###############################top########################################
-#include <string>
-
-std::string *getPtr(); // some function that returns a pointer
-
-int main() {
-  auto ptr3{*getPtr()};  // std::string (because we dereferenced getPtr())
-  auto *ptr4{*getPtr()}; // does not compile (initializer not a pointer)
-
-  return 0;
-}
-// #################################bottom######################################
-// ###############################top########################################
-#include <string>
-
-std::string *getPtr(); // some function that returns a pointer
-
-int main() {
-  const auto ptr1{getPtr()}; // std::string* const
-  auto const ptr2{getPtr()}; // std::string* const
-
-  const auto *ptr3{getPtr()}; // const std::string*
-  auto *const ptr4{getPtr()}; // std::string* const
-
-  return 0;
-}
-// #################################bottom######################################
-// ###############################top########################################
-#include <string>
-
-int main() {
-  std::string s{};
-  const std::string *const ptr{&s};
-
-  auto ptr1{ptr};  // const std::string*
-  auto *ptr2{ptr}; // const std::string*
-
-  auto const ptr3{ptr}; // const std::string* const
-  const auto ptr4{ptr}; // const std::string* const
-
-  auto *const ptr5{ptr}; // const std::string* const
-  const auto *ptr6{ptr}; // const std::string*
-
-  const auto const ptr7{ptr};  // error: const qualifer can not be applied twice
-  const auto *const ptr8{ptr}; // const std::string* const
-
-  return 0;
-}
-// #################################bottom######################################
 */
 
-// ###############################top########################################
+/* // In most cases, type deduction will drop the const from deduced types. For
+example:
 
-// #################################bottom######################################
-// ###############################top########################################
+int main()
+{
+    const int a { 5 }; // a has type const int
+    auto b { a };      // b has type int (const dropped)
 
-// #################################bottom######################################
-// ###############################top########################################
+    return 0;
+}
+ */
 
-// #################################bottom######################################
-// ###############################top########################################
+/*
+//If you want a deduced type to be const, you must supply the const yourself as
+// part of the definition:
 
-// #################################bottom######################################
+int main()
+{
+    const int a { 5 };  // a has type const int
+    const auto b { a }; // b has type const int (const dropped but reapplied)
+
+
+    return 0;
+}
+*/
+
+/*
+//For historical reasons, string literals in C++ have a strange type. Therefore,
+//the following probably won’t work as expected:
+
+auto s { "Hello, world" }; // s will be type const char*, not std::string
+
+// If you want the type deduced from a string literal to be std::string or
+// std::string_view, you’ll need to use the s or sv literal suffixes
+
+int main()
+{
+    using namespace std::literals; // easiest way to access the s and sv
+suffixes
+
+    auto s1 { "goo"s };  // "goo"s is a std::string literal, so s1 will be
+deduced as a std::string auto s2 { "moo"sv }; // "moo"sv is a std::string_view
+literal, so s2 will be deduced as a std::string_view
+
+    return 0;
+}
+
+*/
+
+/* // Because constexpr is not part of the type system, it cannot be deduced as
+// part of type deduction. However, a constexpr variable is implicitly const,
+// and this const will be dropped during type deduction (and can be readded if
+// desired):
+
+int main() {
+  constexpr double a{3.4}; // a has type const double (constexpr not part of
+                           // type, const is implicit)
+
+  auto b{a};           // b has type double (const dropped)
+  const auto c{a};     // c has type const double (const dropped but reapplied)
+  constexpr auto d{a}; // d has type const double (const dropped but implicitly
+                       // reapplied by constexpr)
+
+  return 0;
+}
+ */
+
+/*
+int x;  // oops, we forgot to initialize x, but the compiler may not complain
+auto y; // the compiler will error out because it can't deduce a type for y
+
+std::string_view getString();   // some function that returns a std::string_view
+
+std::string s1 { getString() }; // bad: expensive conversion from
+std::string_view to std::string (assuming you didn't want this) auto s2 {
+getString() };        // good: no conversion required */
