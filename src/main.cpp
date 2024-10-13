@@ -1,86 +1,128 @@
 #include <iostream>
 #include <string>
+#include <string_view>
 
-// Learncpp.com: section 14.7- Member functions returning references to data
-// members
-/*
-class Employee {
+// Learncpp.com: section 14.8- Benefits of Data Hiding (encapsulation)
+
+// data hiding (also called information hiding or data abstraction) is a
+// technique used to enforce the separation of interface and implementation by
+// hiding (making inaccessible) the implementation of a program-defined data
+// type from users.
+
+// * Data hiding make classes easier to use, and reduces complexity
+
+// * Data hiding allows us to maintain invariants (conditions that must be true
+// throughout the lifetime of an object in order for the object to stay in a
+// valid state)
+
+struct sEmployee // members are public by default
+{
+  std::string name{"John"};
+
+  // Our Employee struct has a class invariant that firstInitial should always
+  // equal the first character of name. If this is ever untrue, then the print()
+  // function will malfunction
+  char firstInitial{'J'}; // should match first initial of name
+
+  void print() const {
+    std::cout << "Employee " << name << " has first initial " << firstInitial
+              << '\n';
+  }
+};
+
+// Let’s rewrite this program, making our member variables private, and exposing
+// a member function to set the name of an Employee
+
+class Employee // members are private by default
+{
   std::string m_name{};
+  char m_firstInitial{};
 
 public:
-  void setName(std::string_view name) { m_name = name; }
+  void setName(std::string_view name) {
+    m_name = name;
+    m_firstInitial =
+        name.front(); // use std::string::front() to get first letter of `name`
+  }
 
-  // Returning by value is the safest, but also expensive due to to copying
-  // std::string getName() const { return m_name; } //  getter returns by value
-
-  // Returning by lvalue Reference
-  // Since member functions are always called on an object, and that object must
-  // exist in the scope of the caller, it is generally safe for a member
-  // function to return a data member by (const) lvalue reference
-  const std::string &getName() const {
-    return m_name;
-  } //  getter returns by const reference
-
-  // useful way to ensure that no conversions occur:
-  // const auto &getName() const {
-  //   return m_name;
-  // } // uses `auto` to deduce return type from m_name
+  void print() const {
+    std::cout << "Employee " << m_name << " has first initial "
+              << m_firstInitial << '\n';
+  }
 };
 
-// createEmployee() returns an Employee by value (which means the returned value
-// is an rvalue)
-Employee createEmployee(std::string_view name) {
-  Employee e;
-  e.setName(name);
-  return e;
-}
-
 int main() {
-  Employee e{};
-  e.setName("Annah");
-  std::cout << e.getName();
+  sEmployee e{}; // defaults to "John" and 'J'
+  e.print();
 
-  // Case 1: okay: use returned reference to member of rvalue class object in
-  // same expression
-  std::cout << createEmployee("Frank").getName();
+  e.name = "Mark"; // change employee's name to "Mark"
+  e.print();       // prints wrong initial
 
-  // Case 2: bad: save returned reference to member of rvalue class object for
-  // use later
-  const std::string &ref{
-      createEmployee("Garbo")
-          .getName()}; // reference becomes dangling when return value of
-                       // createEmployee() is destroyed
-  std::cout << ref;    // undefined behavior
+  Employee new_e{};
+  new_e.setName("John");
+  new_e.print();
 
-  // Case 3: okay: copy referenced value to local variable for use later
-  std::string val{
-      createEmployee("Hans").getName()}; // makes copy of referenced member
-  std::cout << val; // okay: val is independent of referenced member
+  new_e.setName("Mark");
+  new_e.print();
 
   return 0;
 }
 
-// BEST PRACTICE- Prefer to use the return value of a member function that
-// returns by reference immediately, to avoid issues with dangling references
-// when the implicit object is an rvalue. */
+// * Data hiding allows us to do better error detection (and handling)
+// * Data hiding makes it possible to change implementation details without
+// breaking existing programs
+// * Classes with interfaces are easier to debug
 
-class Foo {
-private:
-  int m_value{4}; // private member
+// BEST PRACTICE: Prefer implementing functions as non-members when possible
+// (especially functions that contain application specific data or logic).
+// EXAMPLE:
+/*
+class Yogurt {
+  std::string m_flavor{"vanilla"};
 
 public:
-  // Because a reference acts just like the object being referenced, a member
-  // function that returns a non-const reference provides direct access to that
-  // member (even if the member is private).
-  int &value() {
-    return m_value;
-  } // returns a non-const reference (don't do this)
+  void setFlavor(std::string_view flavor) { m_flavor = flavor; }
+
+  const std::string &getFlavor() const { return m_flavor; }
 };
 
+// Best: non-member function print() is not part of the class interface
+void print(const Yogurt &y) {
+  std::cout << "The yogurt has flavor " << y.getFlavor() << '\n';
+}
+
 int main() {
-  Foo f{};                // f.m_value is initialized to default value 4
-  f.value() = 5;          // The equivalent of m_value = 5
-  std::cout << f.value(); // prints 5
+  Yogurt y{};
+  y.setFlavor("cherry");
+  print(y);
 
   return 0;
 }
+ */
+
+/*
+When writing code outside of a class, we are required to declare variables and
+functions before we can use them. However, inside a class, this limitation does
+not exist. As noted in lesson 14.3 -- Member functions, we can order our members
+in any order we like.
+
+So how should we order them?
+
+There are two schools of thought here:
+
+* List your private members first, and then list your public member functions.
+This follows the traditional style of declare-before-use. Anybody looking at
+your class code will see how you’ve defined your data members before they are
+used, which can make reading through and understanding implementation details
+easier.
+* List your public members first, and put your private members down at the
+bottom. Because someone who uses your class is interested in the public
+interface, putting your public members first makes the information they need up
+top, and puts the implementation details (which are least important) last.
+
+In modern C++, the second method (public members go first) is more commonly
+recommended, especially for code that will be shared with other developers.*/
+
+// BEST PRACTICE- Declare public members first, protected members next, and
+// private members last. This spotlights the public interface and de-emphasizes
+// implementation details.
