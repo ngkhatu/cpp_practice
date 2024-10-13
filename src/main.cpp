@@ -1,100 +1,86 @@
 #include <iostream>
 #include <string>
 
-// Learncpp.com: section 13.8- Struct Aggregate Initialization
+// Learncpp.com: section 14.7- Member functions returning references to data
+// members
+/*
+class Employee {
+  std::string m_name{};
 
-// an aggregate data type (also called an aggregate) is any type that can
-// contain multiple data members. Some types of aggregates allow members to have
-// different types (e.g. structs), while others require that all members must be
-// of a single type
+public:
+  void setName(std::string_view name) { m_name = name; }
 
-/* //  2 primary forms of aggregate initialization:
-struct Employee {
-  int id{};
-  int age{};
-  double wage{};
+  // Returning by value is the safest, but also expensive due to to copying
+  // std::string getName() const { return m_name; } //  getter returns by value
+
+  // Returning by lvalue Reference
+  // Since member functions are always called on an object, and that object must
+  // exist in the scope of the caller, it is generally safe for a member
+  // function to return a data member by (const) lvalue reference
+  const std::string &getName() const {
+    return m_name;
+  } //  getter returns by const reference
+
+  // useful way to ensure that no conversions occur:
+  // const auto &getName() const {
+  //   return m_name;
+  // } // uses `auto` to deduce return type from m_name
 };
 
-// Overloading operator<< to print a struct
-std::ostream &operator<<(std::ostream &out, const Employee &e) {
-  out << e.id << ' ' << e.age << ' ' << e.wage;
-  return out;
+// createEmployee() returns an Employee by value (which means the returned value
+// is an rvalue)
+Employee createEmployee(std::string_view name) {
+  Employee e;
+  e.setName(name);
+  return e;
 }
 
 int main() {
-  Employee frank = {1, 32,
-                    60000.0}; // copy-list initialization using braced list
-  Employee joe{2, 28,
-               45000.0}; // list initialization using braced list (preferred)
+  Employee e{};
+  e.setName("Annah");
+  std::cout << e.getName();
 
-  // in C++20
-  // Employee robert(3, 45, 62500.0); // direct initialization using
-  // parenthesized list (C++20)
+  // Case 1: okay: use returned reference to member of rvalue class object in
+  // same expression
+  std::cout << createEmployee("Frank").getName();
 
-  Employee joey{2, 28}; // joe.wage will be value-initialized to 0.0
-  std::cout << joe.wage << std::endl;
-  Employee joseph{}; // value-initialize all members
+  // Case 2: bad: save returned reference to member of rvalue class object for
+  // use later
+  const std::string &ref{
+      createEmployee("Garbo")
+          .getName()}; // reference becomes dangling when return value of
+                       // createEmployee() is destroyed
+  std::cout << ref;    // undefined behavior
 
-  Employee jose{2, 28}; // jose.wage will be value-initialized to 0.0
-  std::cout << jose << '\n';
-
-  // struct type can be const (or constexpr)
-
-  const Employee Ann{}; // value-initialize all members
-  const Employee Linda{4, 21, 40000};
-
-  std::cout << Linda.wage << std::endl;
-
-  std::cout << joe << std::endl;
-  joe = {joe.id, 33, 66000.0}; // Joe had a birthday and got a raise
-  std::cout << joe << std::endl;
-  joe = {.id = joe.id,
-         .age = 34,
-         .wage = 90000.0}; // Joe had a birthday and got a raise
-  std::cout << joe << std::endl;
+  // Case 3: okay: copy referenced value to local variable for use later
+  std::string val{
+      createEmployee("Hans").getName()}; // makes copy of referenced member
+  std::cout << val; // okay: val is independent of referenced member
 
   return 0;
-} */
-
-// When initializing a struct from a list of values, the initializers are
-// applied to the members in order of declaration
-struct Foo {
-  int a{};
-  int b{}; // just added
-  // Now all your initialization values have shifted, and worse, the compiler
-  // may not detect this as an error (after all, the syntax is still valid).
-  int c{};
-};
-
-// Overloading operator<< to print a struct
-std::ostream &operator<<(std::ostream &out, const Foo &e) {
-  out << e.a << ' ' << e.b << ' ' << e.c;
-  return out;
 }
 
+// BEST PRACTICE- Prefer to use the return value of a member function that
+// returns by reference immediately, to avoid issues with dangling references
+// when the implicit object is an rvalue. */
+
+class Foo {
+private:
+  int m_value{4}; // private member
+
+public:
+  // Because a reference acts just like the object being referenced, a member
+  // function that returns a non-const reference provides direct access to that
+  // member (even if the member is private).
+  int &value() {
+    return m_value;
+  } // returns a non-const reference (don't do this)
+};
+
 int main() {
-  // Foo f{1, 3}; // f.a = 1, f.c = 3
+  Foo f{};                // f.m_value is initialized to default value 4
+  f.value() = 5;          // The equivalent of m_value = 5
+  std::cout << f.value(); // prints 5
 
-  // Designated Initializers- allow to explicitly define which initilization
-  // values map to which members
-  // C++20 add a new way to initialize struct members
-  Foo f1{.a{1}, .c{3}}; // ok: f1.a = 1, f1.b = 0 (value initialized), f1.c = 3
-  Foo f2{.a = 1,
-         .c = 3}; // ok: f2.a = 1, f2.b = 0 (value initialized), f2.c = 3
-  // Foo f3{.b{2}, .a{1}}; // error: initialization order does not match order
-  // of declaration in struct
-
-  std::cout << f1 << std::endl;
-  std::cout << f2 << std::endl;
-
-  Foo foo{1, 2, 3};
-
-  Foo x = foo; // copy initialization
-  Foo y(foo);  // direct initialization
-  Foo z{foo};  // list initialization
-
-  std::cout << x << '\n';
-  std::cout << y << '\n';
-  std::cout << z << '\n';
   return 0;
 }
