@@ -1,48 +1,34 @@
 #include <iostream>
-#include <string>
-#include <string_view>
 
-// Learncpp.com: section 14.9- Introduction to Constructors
+// Learncpp.com: section 14.10- Constructor Member Initializer Lists
 
-// A constructor is a special member function that is automatically called after
-// a non-aggregate class type object is created.
+// To have a constructor initialize members, we do so using a member initializer
+// list (often called a “member initialization list”)
 
-// Beyond determining how an object may be created, constructors generally
-// perform two functions:
+// member initializer list is defined after the constructor parameters. It
+// begins with a colon (:), and then lists each member to initialize along with
+// the initialization value for that variable, separated by a comma. You must
+// use a direct form of initialization here (preferably using braces, but
+// parentheses works as well) -- using copy initialization (with an equals) does
+// not work here. Also note that the member initializer list does not end in a
+// semicolon
 
-// * They typically perform initialization of any member variables (via a member
-// initialization list)
-// * They may perform other setup functions (via statements in the body of the
-// constructor). This might include things such as error checking the
-// initialization values, opening a file or database, etc…
+// BEST PRACTICE- Member variables in a member initializer list should be listed
+// in order that they are defined in the class.
+// BEST PRACTICE- Prefer using the member initializer list to initialize your
+// members over assigning values in the body of the constructor.
 
-// After the constructor finishes executing, we say that the object has been
-// “constructed”, and the object should now be in a consistent, usable state.
-
-// Note that aggregates are not allowed to have constructors -- so if you add a
-// constructor to an aggregate, it is no longer an aggregate.
-
-// Unlike normal member functions, constructors have specific rules for how they
-// must be named:
-
-// * Constructors must have the same name as the class (with the same
-// capitalization).
-// - For template classes, this name excludes the template parameters.
-// * Constructors have no return type (not even void).
-
-// Because constructors are typically part of the interface for your class, they
-// are usually public.
-
-#include <iostream>
-/*
-class Foo {
+/* class Foo {
 private:
   int m_x{};
   int m_y{};
 
 public:
-  Foo(int x,
-      int y) // here's our constructor function that takes two initializers
+  // members in a member initializer list are always initialized in the order in
+  // which they are defined inside the class (not in the order they are defined
+  // in the member initializer list)
+  Foo(int x, int y)
+      : m_x{x}, m_y{y} // here's our member initialization list
   {
     std::cout << "Foo(" << x << ", " << y << ") constructed\n";
   }
@@ -51,42 +37,57 @@ public:
 };
 
 int main() {
-  Foo foo{6, 7}; // calls Foo(int, int) constructor
+  Foo foo{6, 7};
   foo.print();
 
   return 0;
 } */
 
-// * Constructor implicit conversion of arguments
-// - compiler will perform implicit conversion of arguments in a function call
-// (if needed) in order to match a function definition where the parameters are
-// a different type
-// * A constructor needs to be able to initialize the object being constructed
-// -- therefore, a constructor must not be const.
 // ######################################################
+// Members can be initialized in a few different ways:
 
-class Something {
+// * If a member is listed in the member initializer list, that initialization
+// value is used
+// * Otherwise, if the member has a default member initializer, that
+// initialization value is used
+// * Otherwise, the member is default initialized.
+// This means that if a member has both a default member initializer and is
+// listed in the member initializer list for the constructor, the member
+// initializer list value takes precedence.
+
+// Here’s an example showing all three initialization methods:
+class Foo {
 private:
-  int m_x{};
+  int m_x{}; // default member initializer (will be ignored)
+  // m_x first to be initialized since it is in the list
+  int m_y{2}; // default member initializer (will be used)
+  // not in the list, use  default
+  int m_z; // no initializer
+  // no initializer or default. undefined behavior
 
 public:
-  Something() // constructors must be non-const
+  Foo(int x)
+      : m_x{x} // member initializer list
+
+  // statements in the body of the constructor execute after the member
+  // initializer list has executed, we can add statements to do any other setup
+  // tasks required. In the above examples, we print something to the console to
+  // show that the constructor executed, but we could do other things like open
+  // a file or database, allocate memory, etc…
   {
-    m_x = 5; // okay to modify members in non-const constructor
+    // m_x = x; // incorrect: this is an assignment, not an initialization
+    // m_y = y; // incorrect: this is an assignment, not an initialization
+    std::cout << "Foo constructed\n";
   }
 
-  int getX() const { return m_x; } // const
+  void print() const {
+    std::cout << "Foo(" << m_x << ", " << m_y << ", " << m_z << ")\n";
+  }
 };
 
 int main() {
-
-  // Normally a non-const member function can’t be invoked on a const object.
-  // However, because the constructor is invoked implicitly, a non-const
-  // constructor can be invoked on a const object
-  const Something
-      s{}; // const object, implicitly invokes (non-const) constructor
-
-  std::cout << s.getX(); // prints 5
+  Foo foo{6};
+  foo.print();
 
   return 0;
 }
