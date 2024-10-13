@@ -1,95 +1,67 @@
 #include <iostream>
 
-// Learncpp.com: section 14.5- Public and private members and access specifiers
+// Learncpp.com: section 14.6- Class Access Functions
 
-// - Access Level: Each member of a class type has a property called an access
-// level that determines who can access that member.
-// * Three levels- Public, Private, Protected
+/*
+Access functions come in two flavors: getters and setters.
 
-// - Public Members- Members of a class type that do not have any restrictions
-// on how they can be accessed
-// * Can be accessed by other members of the same class
-// * Can be accessed by code that exists outside the members of a given class
-// type
-// * By default, all members of a struct(and union) are public members.
-// struct Date{int day{};}; int main{Date today{14}; today.day=16;}
-// Because main() is not a member of Date, it is considered to be part of the
-// public
+Getters (also sometimes called accessors) are public member functions that
+return the value of a private member variable. Setters (also sometimes called
+mutators) are public member functions that set the value of a private member
+variable.
 
-// - Private Members- Members that have private access level.\
-// * Members of a class type that can only be accessed by other members of the same class
-// * Members of a class are private by default
+Getters are usually made const, so they can be called on both const and
+non-const objects. Setters should be non-const, so they can modify the data
+members.
+*/
 
-#include <iostream>
+class Date {
+private:
+  int m_year{2020};
+  int m_month{10};
+  int m_day{14};
 
-class Date // now a class instead of a struct
-{
-
-private: // private access specifier
-  // class members are private by default, can only be accessed by other members
-  // private members given "_m" prefix
-  int m_year{2020}; // private by default
-  int m_month{14};  // private by default
-  int m_day{10};    // private by default
-
-public:              // public access specifier
-  void print() const // private by default
-  {
-    // private members can be accessed in member functions
-    std::cout << m_year << '/' << m_month << '/' << m_day;
+public:
+  void print() {
+    std::cout << m_year << '/' << m_month << '/' << m_day << '\n';
   }
+
+  // Getters should provide “read-only” access to data. Therefore, the best
+  // practice is that they should return by either value (if making a copy of
+  // the member is inexpensive) or by const lvalue reference (if making a copy
+  // of the member is expensive)
+  int getYear() const { return m_year; }    // getter for year
+  void setYear(int year) { m_year = year; } // setter for year
+
+  int getMonth() const { return m_month; }      // getter for month
+  void setMonth(int month) { m_month = month; } // setter for month
+
+  int getDay() const { return m_day; }  // getter for day
+  void setDay(int day) { m_day = day; } // setter for day
 };
 
 int main() {
-  // Date today{2020, 10, 14}; // compile error: can no longer use aggregate
-  // initialization
-
-  // private members can not be accessed by the public
-  // today.m_day = 16; // compile error: the m_day member is private
-  // today.print(); // compile error: the print() member function is private
-
-  // Because we have private members, we can not aggregate initialize d. For
-  // this example, we’re using default member initialization instead (as a
-  // temporary workaround)
   Date d{};
-  d.print();
+  d.setYear(2021);
+  std::cout << "The year is: " << d.getYear() << '\n';
 
   return 0;
 }
 
-// BEST PRACTICES
-// * Structs should avoid access specifiers altogether, meaning all struct
-// members will be public by default
-// * Classes should generally only have private (or protected) data members
-// (either by using the default private access level, or the private: (or
-// protected:) access specifier)
-// * Classes normally have public member functions (so those member functions
-// can be used by the public after the object is created). However, occasionally
-// member functions are made private (or protected) if they are not intended to
-// be used by the public.
-
 /*
-Structs vs Classes
----------------------
-* A class defaults its members to private, whereas a struct defaults its members
-to public.
+There is a fair bit of discussion around cases in which access functions should
+be used or avoided. Many developers would argue that use of access functions
+violates good class design (a topic that could easily fill an entire book).
 
-In practice, we use structs and classes differently.
------------------
-As a rule of thumb, use a struct when all of the following are true:
+For now, we’ll recommend a pragmatic approach. As you create your classes,
+consider the following:
 
-* You have a simple collection of data that doesn’t benefit from restricting
-access.
-* Aggregate initialization is sufficient.
-* You have no class invariants,setup needs, or cleanup needs. A few examples of
-where structs might be used: constexpr global program data, a point struct (a
-simple collection of int members that don’t benefit from being made private),
-structs used to return a set of data from a function.
----------------
-Use a class otherwise.
-
-We want our structs to be aggregates. So if you use any capabilities that makes
-your struct a non-aggregate, you should probably be using a class instead (and
-following all of the best practices for classes).
-
+* If your class has no invariants and requires a lot of access functions,
+consider using a struct (whose data members are public) and providing direct
+access to members instead.
+* Prefer implementing behaviors or actions instead of access functions. For
+example, instead of a setAlive(bool) setter, implement a kill() and a revive()
+function.
+* Only provide access functions in cases where the public would reasonably need
+to get or set the value of an individual member.
 */
