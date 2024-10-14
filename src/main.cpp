@@ -1,165 +1,125 @@
-// Learncpp.com: section 14.17- Constexpr aggregates and classes
+// Learncpp.com: section 15.1- hidden “this” pointer and member function
+// chaining
+
+/*
+We use -> to select a member from a pointer to an object. this->m_id is the
+equivalent of (*this).m_id.
+*/
+
+// Inside every member function, the keyword this is a const pointer that holds
+// the address of the current implicit object.
+
+// For non-const member functions
+// this is a const pointer to a non-const value
+// (meaning this cannot be pointed at something else, but the object pointing to
+// may be modified).
+
+// With const member functions
+// this is a const pointer to a const value (meaning the pointer cannot be
+// pointed at something else, nor may the object being pointed to be modified).
 
 #include <iostream>
-
 /*
-In this example, greater() is a constexpr function, and greater(5, 6) is a
-constant expression, which may be evaluated at either compile-time or runtime.
+class Simple {
+private:
+  int m_id{};
+
+public:
+  Simple(int id) : m_id{id} {}
+
+  int getID() const { return this->m_id; }
+  void setID(int id) { this->m_id = id; }
+
+  void print() const {
+    std::cout << this->m_id;
+  } // use `this` pointer to access the implicit object and operator-> to select
+    // member m_id
+};
+
+int main() {
+  Simple simple{1};
+  simple.setID(2);
+
+  simple.print();
+
+  return 0;
+}
+ */
+/*
+void print() const { std::cout << m_id; }       // implicit use of this
+void print() const { std::cout << this->m_id; } // explicit use of this
+
+How the compiler rewrites functions is an implementation-specific detail, but
+the end-result is something like this:
 */
-/* constexpr int greater(int x, int y) { return (x > y ? x : y); }
+// static void setID(Simple* const this, int id) { this->m_id = id; }
 
-int main() {
-  // Because std::cout << greater(5, 6) calls greater(5, 6) in a non-constexpr
-  // context, the compiler is free to choose whether to evaluate greater(5, 6)
-  // at compile-time or runtime.
-  std::cout
-      << greater(5, 6)
-      << '\n'; // greater(5, 6) may be evaluated at compile-time or runtime
-
-  // When greater(5, 6) is used to initialize constexpr
-  // variable g, greater(5, 6) is called in a constexpr context, and must be
-  // evaluated at compile-time.
-  constexpr int g{
-      greater(5, 6)};     // greater(5, 6) must be evaluated at compile-time
-  std::cout << g << '\n'; // prints 6
-
-  return 0;
-}
- */
-
-// #############################################
-// Aggregate Structure
-/* struct Pair {
-  int m_x{};
-  int m_y{};
-
-  constexpr int greater() const { return (m_x > m_y ? m_x : m_y); }
-  // The following will give compile error due to non-constexpr
-  // int greater() const { return (m_x > m_y ? m_x : m_y); }
-};
-
-int main() {
-  constexpr Pair p{5, 6}; // inputs are constexpr values
-  // Need to make the following constexpr for p.greater() to work
-  // Pair p{5, 6};                     // inputs are constexpr values
-  std::cout << p.greater() << '\n'; // p.greater() evaluates at runtime
-
-  constexpr int g{p.greater()}; // compile error: greater() not constexpr
-  std::cout << g << '\n';
-
-  return 0;
-} */
-
-// ##################################################
 /*
-// Non-aggregate data structure
-// BEST PRACTICE- If you want your class to be able to be evaluated at
-// compile-time, make your member functions and constructor constexpr.
-
-class Pair // Pair is no longer an aggregate
+int main()
 {
-private:
-  int m_x{};
-  int m_y{};
+    Simple a{1}; // this = &a inside the Simple constructor
+    Simple b{2}; // this = &b inside the Simple constructor
+    a.setID(3); // this = &a inside member function setID()
+    b.setID(4); // this = &b inside member function setID()
 
-public:
-  constexpr Pair(int x, int y) : m_x{x}, m_y{y} {}
-  // Compiler fails since constuctor is not constexpr
-  // Pair(int x, int y) : m_x{x}, m_y{y} {}
+    return 0;
+}
+*/
 
-  constexpr int greater() const { return (m_x > m_y ? m_x : m_y); }
+// #################################
+/* //  Example of where 'this' can be useful
+struct Something {
+  int data{}; // not using m_ prefix because this is a struct
+
+  void setData(int data) {
+    this->data = data; // this->data is the member, data is the local parameter
+  }
 };
-constexpr int init() {
-  Pair p{
-      5,
-      6}; // requires constructor to be constexpr when evaluated at compile-time
-  return p.greater(); // requires greater() to be constexpr when evaluated at
-                      // compile-time
-}
-
-int main() {
-  constexpr Pair p{5, 6}; // compile error: p is not a literal type
-  std::cout << p.greater() << '\n';
-
-  // constexpr int g{p.greater()};
-  // std::cout << g << '\n';
-
-  constexpr int g{init()}; // init() evaluated in runtime context
-  std::cout << g << '\n';
-
-  return 0;
-}
-
-// get a compiler error about Pair not being a “literal type”
-//* In C++, a literal type is any type for which it might be possible to create
-// an object within a constant expression. Put another way, an object can’t be
-// constexpr unless the type qualifies as a literal type. And our non-aggregate
-// Pair does not qualify.
-// * When a class object is instantiated, the compiler will call the constructor
-// function to initialize the object. And the constructor function in our Pair
-// class is not constexpr, so it can’t be invoked at compile-time. Therefore,
-// Pair objects cannot be constexpr
  */
+// ########################################
+// Function chaining/ Method chaining
+// it can sometimes be useful to have a member function return the implicit
+// object as a return value. The primary reason to do this is to allow member
+// functions to be “chained” together, so several member functions can be called
+// on the same object in a single expression! This is called function chaining
+// (or method chaining).
 
-// #########################################################
-// As of C++14, constexpr member functions are no longer implicitly
-// const. This means a constexpr non-const member function can change data
-// members of the class, so long as the implicit object isn’t const.
-
-// * A non-const member function can modify members of non-const objects.
-// * A constexpr member function can be called in either runtime contexts or
-// compile-time contexts.
-
-class Pair {
+class Calc {
 private:
-  int m_x{};
-  int m_y{};
+  int m_value{};
 
 public:
-  constexpr Pair(int x, int y) : m_x{x}, m_y{y} {}
-
-  constexpr int greater() const // constexpr and const
-  {
-    return (m_x > m_y ? m_x : m_y);
+  Calc &add(int value) {
+    m_value += value;
+    return *this;
+  }
+  Calc &sub(int value) {
+    m_value -= value;
+    return *this;
+  }
+  Calc &mult(int value) {
+    m_value *= value;
+    return *this;
   }
 
-  constexpr void reset() // constexpr but non-const
-  {
-    m_x = m_y = 0; // non-const member function can change members
-  }
+  int getValue() const { return m_value; }
 
-  // Normally you won’t see constexpr and const used right next to each other,
-  // but one case where this does happen is when you have a constexpr member
-  // function that returns a const reference (or pointer-to-const).
-
-  // The constexpr indicates that the member function can be evaluated at
-  // compile-time. The const int& is the return type of the function. The
-  // rightmost const means the member-function itself is const so it can be
-  // called on const objects.
-  constexpr const int &getX() const { return m_x; }
+  // The best way to reset a class back to a default state is to create a
+  // reset() member function, have that function create a new object (using the
+  // default constructor), and then assign that new object to the current
+  // implicit object, like this:
+  void reset() { *this = {}; }
 };
 
-// This function is constexpr
-constexpr Pair zero() {
-  Pair p{1, 2}; // p is non-const
-  p.reset();    // okay to call non-const member function on non-const object
-  return p;
-}
-
 int main() {
-  Pair p1{3, 4};
-  p1.reset(); // okay to call non-const member function on non-const object
-  std::cout << p1.getX() << '\n'; // prints 0
+  Calc calc{};
+  calc.add(5).sub(3).mult(4);
 
-  Pair p2{zero()}; // zero() will be evaluated at runtime
-  p2.reset();      // okay to call non-const member function on non-const object
-  std::cout << p2.getX() << '\n'; // prints 0
+  std::cout << calc.getValue() << '\n'; // prints 8
 
-  constexpr Pair p3{zero()}; // zero() will be evaluated at compile-time
-  //    p3.reset();                   // Compile error: can't call non-const
-  //    member function on const object
+  calc.reset();
 
-  std::cout << p3.getX() << '\n'; // prints 0
+  std::cout << calc.getValue() << '\n'; // prints 0
 
   return 0;
 }
