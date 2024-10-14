@@ -1,188 +1,165 @@
-// Learncpp.com: section 14.16- Converting constructors and the explicit keyword
+// Learncpp.com: section 14.17- Constexpr aggregates and classes
 
 #include <iostream>
 
-// BEST PRACTICE- * Make any constructor that accepts a single argument explicit
-// by default. If an implicit conversion between types is both semantically
-// equivalent and performant, you can consider making the constructor
-// non-explicit.
-// * Do not make copy or move constructors explicit, as these do not perform
-// conversion
+/*
+In this example, greater() is a constexpr function, and greater(5, 6) is a
+constant expression, which may be evaluated at either compile-time or runtime.
+*/
+/* constexpr int greater(int x, int y) { return (x > y ? x : y); }
 
-/* class Foo {
+int main() {
+  // Because std::cout << greater(5, 6) calls greater(5, 6) in a non-constexpr
+  // context, the compiler is free to choose whether to evaluate greater(5, 6)
+  // at compile-time or runtime.
+  std::cout
+      << greater(5, 6)
+      << '\n'; // greater(5, 6) may be evaluated at compile-time or runtime
+
+  // When greater(5, 6) is used to initialize constexpr
+  // variable g, greater(5, 6) is called in a constexpr context, and must be
+  // evaluated at compile-time.
+  constexpr int g{
+      greater(5, 6)};     // greater(5, 6) must be evaluated at compile-time
+  std::cout << g << '\n'; // prints 6
+
+  return 0;
+}
+ */
+
+// #############################################
+// Aggregate Structure
+/* struct Pair {
+  int m_x{};
+  int m_y{};
+
+  constexpr int greater() const { return (m_x > m_y ? m_x : m_y); }
+  // The following will give compile error due to non-constexpr
+  // int greater() const { return (m_x > m_y ? m_x : m_y); }
+};
+
+int main() {
+  constexpr Pair p{5, 6}; // inputs are constexpr values
+  // Need to make the following constexpr for p.greater() to work
+  // Pair p{5, 6};                     // inputs are constexpr values
+  std::cout << p.greater() << '\n'; // p.greater() evaluates at runtime
+
+  constexpr int g{p.greater()}; // compile error: greater() not constexpr
+  std::cout << g << '\n';
+
+  return 0;
+} */
+
+// ##################################################
+/*
+// Non-aggregate data structure
+// BEST PRACTICE- If you want your class to be able to be evaluated at
+// compile-time, make your member functions and constructor constexpr.
+
+class Pair // Pair is no longer an aggregate
+{
 private:
   int m_x{};
+  int m_y{};
 
 public:
-  Foo(int x) : m_x{x} {}
+  constexpr Pair(int x, int y) : m_x{x}, m_y{y} {}
+  // Compiler fails since constuctor is not constexpr
+  // Pair(int x, int y) : m_x{x}, m_y{y} {}
 
-  int getX() const { return m_x; }
+  constexpr int greater() const { return (m_x > m_y ? m_x : m_y); }
 };
-
-// printFoo has a Foo parameter but we’re passing in an argument of type int.
-// Because these types do not match, the compiler will try to implicitly convert
-// int value 5 into a Foo object so the function can be called
-void printFoo(Foo f) // has a Foo parameter
-{
-  std::cout << f.getX();
+constexpr int init() {
+  Pair p{
+      5,
+      6}; // requires constructor to be constexpr when evaluated at compile-time
+  return p.greater(); // requires greater() to be constexpr when evaluated at
+                      // compile-time
 }
 
 int main() {
-  // user-defined conversion: compiler will look to see if we have defined some
-  // function that it can use to perform such a conversion
-  printFoo(5); // we're supplying an int argument
+  constexpr Pair p{5, 6}; // compile error: p is not a literal type
+  std::cout << p.greater() << '\n';
+
+  // constexpr int g{p.greater()};
+  // std::cout << g << '\n';
+
+  constexpr int g{init()}; // init() evaluated in runtime context
+  std::cout << g << '\n';
 
   return 0;
 }
+
+// get a compiler error about Pair not being a “literal type”
+//* In C++, a literal type is any type for which it might be possible to create
+// an object within a constant expression. Put another way, an object can’t be
+// constexpr unless the type qualifies as a literal type. And our non-aggregate
+// Pair does not qualify.
+// * When a class object is instantiated, the compiler will call the constructor
+// function to initialize the object. And the constructor function in our Pair
+// class is not constexpr, so it can’t be invoked at compile-time. Therefore,
+// Pair objects cannot be constexpr
  */
 
-// ####################################################
-/* #include <iostream>
-#include <string>
-#include <string_view>
+// #########################################################
+// As of C++14, constexpr member functions are no longer implicitly
+// const. This means a constexpr non-const member function can change data
+// members of the class, so long as the implicit object isn’t const.
 
-class Employee {
+// * A non-const member function can modify members of non-const objects.
+// * A constexpr member function can be called in either runtime contexts or
+// compile-time contexts.
+
+class Pair {
 private:
-  std::string m_name{};
+  int m_x{};
+  int m_y{};
 
 public:
-  Employee(std::string_view name) : m_name{name} {}
+  constexpr Pair(int x, int y) : m_x{x}, m_y{y} {}
 
-  const std::string &getName() const { return m_name; }
+  constexpr int greater() const // constexpr and const
+  {
+    return (m_x > m_y ? m_x : m_y);
+  }
+
+  constexpr void reset() // constexpr but non-const
+  {
+    m_x = m_y = 0; // non-const member function can change members
+  }
+
+  // Normally you won’t see constexpr and const used right next to each other,
+  // but one case where this does happen is when you have a constexpr member
+  // function that returns a const reference (or pointer-to-const).
+
+  // The constexpr indicates that the member function can be evaluated at
+  // compile-time. The const int& is the return type of the function. The
+  // rightmost const means the member-function itself is const so it can be
+  // called on const objects.
+  constexpr const int &getX() const { return m_x; }
 };
 
-void printEmployee(Employee e) // has an Employee parameter
-{
-  std::cout << e.getName();
+// This function is constexpr
+constexpr Pair zero() {
+  Pair p{1, 2}; // p is non-const
+  p.reset();    // okay to call non-const member function on non-const object
+  return p;
 }
 
 int main() {
+  Pair p1{3, 4};
+  p1.reset(); // okay to call non-const member function on non-const object
+  std::cout << p1.getX() << '\n'; // prints 0
 
-  // only one user-defined conversion may be applied to perform an implicit
-  // conversion, and this example requires two.
-  //* First, our C-style string literal has to be converted to a
-  // std::string_view (using a std::string_view converting constructor)
-  //* then our std::string_view has to be converted
-  // into an Employee (using the Employee(std::string_view) converting
-  // constructor).
-  // printEmployee("Joe"); // we're supplying an string literal argument
+  Pair p2{zero()}; // zero() will be evaluated at runtime
+  p2.reset();      // okay to call non-const member function on non-const object
+  std::cout << p2.getX() << '\n'; // prints 0
 
-  // Two ways to make this work:
-  // 1) Use a string-view literal
-  using namespace std::literals;
-  printEmployee("Joe"sv);
-  // This works because only one user-defined conversion is now required (from
-  // std::string_view to Employee).
+  constexpr Pair p3{zero()}; // zero() will be evaluated at compile-time
+  //    p3.reset();                   // Compile error: can't call non-const
+  //    member function on const object
 
-  // 2) Explicitly construct an Employee rather than implicitly creating one
-  printEmployee(Employee{"Joe"});
-  // This also works because only one user-defined conversion is now required
-  // (from the string literal to the std::string_view used to initialize the
-  // Employee object).
+  std::cout << p3.getX() << '\n'; // prints 0
 
   return 0;
 }
- */
-// ##########################################################
-/* // we can use the explicit keyword to tell the compiler that a constructor
-// should not be used as a converting constructor. Two consequences:
-// * An explicit constructor cannot be used to do copy initialization or copy
-// list initialization.
-// * An explicit constructor cannot be used to do implicit conversions (since
-// this uses copy initialization or copy list initialization).
-class Dollars {
-private:
-  int m_dollars{};
-
-public:
-  // Adding explicit keyword to constructor results in compilation error
-  explicit Dollars(int d) : m_dollars{d} {}
-  // Dollars(int d) : m_dollars{d} {}
-
-  int getDollars() const { return m_dollars; }
-};
-
-// It would be better if our print(Dollars) function could only be called with a
-// Dollars object, not any value that can be implicitly converted to a Dollars
-// (especially a fundamental type like int). This would reduce the possibility
-// of inadvertent errors.
-void print(Dollars d) { std::cout << "$" << d.getDollars(); }
-
-int main() {
-  // print(5); // compilation error when using explicit constructor
-
-  // Assume Dollars(int) is explicit
-
-  Dollars d1(5);     // ok
-  Dollars d2{5};     // ok
-  print(Dollars{5}); // ok: explicitly create a Dollars
-  print(static_cast<Dollars>(
-      5)); // ok: static_cast will use explicit constructors
-
-  return 0;
-}
- */
-
-class Foo {
-public:
-  explicit Foo() // note: explicit (just for sake of example)
-  {}
-
-  explicit Foo(int x) // note: explicit
-  {}
-};
-
-// When we return a value from a function, if that value does not match the
-// return type of the function, an implicit conversion will occur. Just like
-// with pass by value, such conversions cannot use explicit constructors.
-Foo getFoo() {
-  /*   // explicit Foo() cases
-    return Foo{}; // ok
-    return {};    // error: can't implicitly convert initializer list to Foo
-
-    // explicit Foo(int) cases
-    return 5;      // error: can't implicitly convert int to Foo
-    return Foo{5}; // ok
-    return {5};    // error: can't implicitly convert initializer list to Foo */
-}
-
-int main() { return 0; }
-/*
-The modern best practice is to make any constructor that will accept a single
-argument explicit by default. This includes constructors with multiple
-parameters where most or all of them have default values. This will disallow the
-compiler from using that constructor for implicit conversions. If an implicit
-conversion is required, only non-explicit constructors will be considered. If no
-non-explicit constructor can be found to perform the conversion, the compiler
-will error.
-
-If such a conversion is actually desired in a particular case, it is trivial to
-convert the implicit conversion into an explicit definition using direct list
-initialization.
-
-The following should not be made explicit:
-
-Copy (and move) constructors (as these do not perform conversions).
-The following are typically not made explicit:
-
-Default constructors with no parameters (as these are only used to convert {} to
-a default object, not something we typically need to restrict). Constructors
-that only accept multiple arguments (as these are typically not a candidate for
-conversions anyway). However, if you prefer, the above can be marked as explicit
-to prevent implicit conversions with empty and multiple-argument lists.
-
-The following should usually be made explicit:
-
-Constructors that take a single argument.
-There are some occasions when it does make sense to make a single-argument
-constructor non-explicit. This can be useful when all of the following are true:
-
-The constructed object is semantically equivalent to the argument value.
-The conversion is performant.
-For example, the std::string_view constructor that accepts a C-style string
-argument is not explicit, because there is unlikely to be a case when we
-wouldn’t be okay with a C-style string being treated as a std::string_view
-instead. Conversely, the std::string constructor that takes a std::string_view
-is marked as explicit, because while a std::string value is semantically
-equivalent to a std::string_view value, constructing a std::string is not
-performant.*/
