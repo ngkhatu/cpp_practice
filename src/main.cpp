@@ -1,202 +1,81 @@
+// Learncpp.com: section 14.12 Delegating Constructors
+
+// Constructors are allowed to delegate (transfer responsibility for)
+// initialization to another constructor from the same class type. This process
+// is sometimes called constructor chaining and such constructors are called
+// delegating constructors.
+
+// To make one constructor delegate initialization to another constructor,
+// simply call the constructor in the member initializer list.
+
 #include <iostream>
+#include <string>
+#include <string_view>
 
-// Learncpp.com: section 14.11- Default constructors and default arguments
-
-//  default constructor is a constructor that accepts no arguments. Typically,
-//  this is a constructor that has been defined with no parameters.
 /*
-class Foo {
+// BEST PRACTICE- If you have multiple constructors, consider whether you can
+// use delegating constructors to reduce duplicate code.
+class Employee {
+private:
+  std::string m_name{};
+  int m_id{0};
+
 public:
-  Foo() // default constructor
+  // First, a constructor that delegates to another constructor is not allowed
+  // to do any member initialization itself. So your constructors can delegate
+  // or initialize, but not both.
+  // Second, it’s possible for one constructor to delegate to another
+  // constructor, which delegates back to the first constructor. This forms an
+  // infinite loop, and will cause your program to run out of stack space and
+  // crash. You can avoid this by ensuring all of your constructors resolve to a
+  // non-delegating constructor
+  Employee(std::string_view name)
+      : Employee{name, 0}
+  // delegate initialization to Employee(std::string_view, int) constructor
+  {}
+  // The downside of this method is that it sometimes requires duplication of
+  // initialization values. In the delegation to the Employee(std::string_view,
+  // int) constructor, we need an initialization value for the int parameter. We
+  // had to hardcode literal 0, as there is no way to reference the default
+  // member initializer
+
+  Employee(std::string_view name, int id)
+      : m_name{name}, m_id{id} // actually initializes the members
   {
-    std::cout << "Foo default constructed\n";
+    std::cout << "Employee " << m_name << " created\n";
   }
 };
 
 int main() {
-  Foo foo{}; // No initialization values, calls Foo's default constructor
-
-  // If a class type has a default constructor, both value initialization and
-  // default initialization will call the default constructor. Thus, for such a
-  // class such as the Foo class in the example above, the following are
-  // essentially equivalent:
-  //  Foo foo{}; // value initialization, calls Foo() default constructor
-  //  Foo foo2;  // default initialization, calls Foo() default constructor
-  // * Prefer value initialization over default initialization for all class
-  // types.
-
-  return 0;
+  Employee e1{"James"};
+  Employee e2{"Dave", 42};
 }
- */
-/*
-class Foo {
-private:
-  int m_x{7};
-  int m_y{7};
-  int m_z{7}; // These vals are ignored
-
-public:
-  // As with all functions, the rightmost parameters of constructors can have
-  // default arguments
-  // - If all of the parameters in a constructor have default arguments, the
-  // constructor is a default constructor (because it can be called with no
-  // arguments).
-  Foo(int x,
-      int y) // has default arguments (Overloaded non-default constructor)
-      : m_x{x}, m_y{y} {
-    std::cout << "Foo(" << m_x << ", " << m_y << ", " << m_z
-              << ") constructed\n";
-  }
-
-  Foo(int x, int y,
-      int z) // has default arguments (Overloaded non-default constructor)
-      : m_x{x}, m_y{y}, m_z{z} {
-    std::cout << "Foo(" << m_x << ", " << m_y << ", " << m_z
-              << ") constructed\n";
-  }
-
-  // Because constructors are functions, they can be overloaded. That is, we can
-  // have multiple constructors so that we can construct objects in different
-  // ways
-  Foo() // Default Constructor
-  {
-    std::cout << "Foo(" << m_x << ", " << m_y << ", " << m_z
-              << ") constructed\n";
-  }
-};
-
-int main() {
-  Foo foo1{};        // calls Foo(int, int) constructor using default arguments
-  Foo foo2{6, 1, 1}; // calls Foo(int, int) constructor
-  Foo foo3{3, 5};
-
-  return 0;
-}
- */
-// A corollary of the above is that a class should only have one default
-// constructor. If more than one default constructor is provided, the compiler
-// will be unable to disambiguate which should be used:
-
-/* This is considered a default constructor
-    Foo(int x=1, int y=2) // default constructor
-        : m_x { x }, m_y { y }
-    {
-        std::cout << "Foo(" << m_x << ", " << m_y << ") constructed\n";
-    }
 */
-// #################################################
-/* //  Implicit Default Constructor
-class Foo {
+// ##################################################################
+// When we have an initialization value that is used in multiple places (e.g. as
+// a default member initializer and a default argument for a constructor
+// parameter), we can instead define a named constant and use that wherever our
+// initialization value is needed. This allows the initialization value to be
+// defined in one place.
+
+// The best way to do this is to use a static constexpr member inside the class:
+
+class Employee {
 private:
-  int m_x{};
-  int m_y{};
-  // Note: no constructors declared
-};
+  static constexpr int default_id{
+      0}; // define a named constant with our desired initialization value
 
-int main() {
-  Foo foo{};
-
-  return 0;
-} */
-
-/*
-public:
-    Foo() // implicitly generated default constructor
-    {
-    }
-*/
-
-// #################################################
-/* //  Explicit Default Constructor
-// BEST PRACTICE- Prefer an explicitly defaulted default constructor (= default)
-// over a default constructor with an empty body.
-class Foo {
-private:
-  int m_x{};
-  int m_y{};
+  std::string m_name{};
+  int m_id{default_id}; // we can use it here
 
 public:
-  // since we have a user-declared constructor (Foo(int, int)), an implicit
-  // default constructor would not normally be generated. However, because we’ve
-  // told the compiler to generate such a constructor, it will.
-  Foo() = default; // generates an explicitly defaulted default constructor
-
-  Foo(int x, int y) : m_x{x}, m_y{y} {
-    std::cout << "Foo(" << m_x << ", " << m_y << ") constructed\n";
+  Employee(std::string_view name, int id = default_id) // and we can use it here
+      : m_name{name}, m_id{id} {
+    std::cout << "Employee " << m_name << " created\n";
   }
 };
 
 int main() {
-  Foo foo{}; // calls Foo() default constructor
-
-  return 0;
-} */
-
-// #####################################################
-
-class User {
-private:
-  int m_a; // note: no default initialization value
-  int m_b{};
-
-public:
-  User() {} // user-defined empty constructor
-
-  int a() const { return m_a; }
-  int b() const { return m_b; }
-};
-
-class Default {
-private:
-  int m_a; // note: no default initialization value
-  int m_b{};
-
-public:
-  Default() = default; // explicitly defaulted default constructor
-
-  int a() const { return m_a; }
-  int b() const { return m_b; }
-};
-
-class Implicit {
-private:
-  int m_a; // note: no default initialization value
-  int m_b{};
-
-public:
-  // implicit default constructor
-
-  int a() const { return m_a; }
-  int b() const { return m_b; }
-};
-
-int main() {
-  // if the class has a user-defined default constructor, the object will be
-  // default initialized
-  User user{}; // default initialized
-  std::cout << user.a() << ' ' << user.b() << '\n';
-  // Note that user.a was not zero initialized before being default initialized,
-  // and thus was left uninitialized.
-  // In practice, this shouldn’t matter since you should be providing default
-  // member initializers for all data members!
-
-  //-----------------------------
-
-  // if the class has a default constructor that is not user-provided (that is,
-  // a default constructor that is either implicitly defined, or defined using =
-  // default), the object will be zero-initialized before being default
-  // initialized
-  Default def{}; // zero initialized, then default initialized
-  std::cout << def.a() << ' ' << def.b() << '\n';
-
-  Implicit imp{}; // zero initialized, then default initialized
-  std::cout << imp.a() << ' ' << imp.b() << '\n';
-
-  return 0;
+  Employee e1{"James"};
+  Employee e2{"Dave", 42};
 }
-// Prior to C++20, a class with a user-defined default constructor (even if it
-// has an empty body) makes the class a non-aggregate, whereas an explicitly
-// defaulted default constructor does not. Assuming the class was otherwise an
-// aggregate, the former would cause the class to use list initialization
-// instead of aggregate initialization. In C++20 onward, this inconsistency was
-// addressed, so that both make the class a non-aggregate.
