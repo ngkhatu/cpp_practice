@@ -1,119 +1,84 @@
-// Learncpp.com: section 14.14- Introduction to the copy constructor
+// Learncpp.com: section 14.15- Class initialization and copy elision
 
+// Copy Elision- compiler optimization technique that allows the compiler to
+// remove unnecessary copying of objects. In other words, in cases where the
+// compiler would normally call a copy constructor, the compiler is free to
+// rewrite the code to avoid the call to the copy constructor altogether. When
+// the compiler optimizes away a call to the copy constructor, we say the
+// constructor has been elided
+
+//  Since the compiler is free to rewrite statements to optimize them, one might
+//  wonder if the compiler can optimize away the
+// unnecessary copy and treat Something s { Something{5} }; as if we had written
+// Something s { 5 } in the first place.
 #include <iostream>
 
-/* // A copy constructor is a constructor that is used to initialize an object
-with
-// an existing object of the same type. After the copy constructor executes, the
-// newly created object should be a copy of the object passed in as the
-// initializer.
-
-class Fraction {
-private:
-  int m_numerator{0};
-  int m_denominator{1};
+class Something {
+  int m_x{};
 
 public:
-  // Default constructor
-  Fraction(int numerator = 0, int denominator = 1)
-      : m_numerator{numerator}, m_denominator{denominator} {}
+  Something(int x) : m_x{x} { std::cout << "Normal constructor\n"; }
 
-  void print() const {
-    std::cout << "Fraction(" << m_numerator << ", " << m_denominator << ")\n";
+  Something(const Something &s) : m_x{s.m_x} {
+    std::cout << "Copy constructor\n";
   }
+
+  void print() const { std::cout << "Something(" << m_x << ")\n"; }
 };
 
 int main() {
-  Fraction f{5, 3}; // Calls Fraction(int, int) constructor
+  Something s{Something{5}}; // focus on this line
+  s.print();
 
-  // invoking the implicit copy constructor to initialize fCopy with f.
+  return 0;
+}
 
-  // By default, the implicit copy constructor will do memberwise
-  // initialization. This means each member will be initialized using the
-  // corresponding member of the class passed in as the initializer.
-  Fraction fCopy{f};
+// ##################################################
+/*
+int a;         // no initializer (default initialization)
+int b = 5;     // initializer after equals sign (copy initialization)
+int c( 6 );    // initializer in parentheses (direct initialization)
 
-  f.print();
-  fCopy.print();
+// List initialization methods (C++11)
+int d { 7 };   // initializer in braces (direct list initialization)
+int e = { 8 }; // initializer in braces after equals sign (copy list
+initialization) int f {};      // initializer is empty braces (value
+initialization)
+*/
+
+// ################################################
+/* //  Valid initialization types for object with class types
+#include <iostream>
+
+class Foo {
+public:
+  // Default constructor
+  Foo() { std::cout << "Foo()\n"; }
+
+  // Normal constructor
+  Foo(int x) { std::cout << "Foo(int) " << x << '\n'; }
+
+  // Copy constructor
+  Foo(const Foo &) { std::cout << "Foo(const Foo&)\n"; }
+};
+
+int main() {
+  // Calls Foo() default constructor
+  Foo f1;   // default initialization
+  Foo f2{}; // value initialization (preferred)
+
+  // Calls foo(int) normal constructor
+  Foo f3 = 3;   // copy initialization (non-explicit constructors only)
+  Foo f4(4);    // direct initialization
+  Foo f5{5};    // direct list initialization (preferred)
+  Foo f6 = {6}; // copy list initialization (non-explicit constructors only)
+
+  // Calls foo(const Foo&) copy constructor
+  Foo f7 = f3;    // copy initialization
+  Foo f8(f3);     // direct initialization
+  Foo f9{f3};     // direct list initialization (preferred)
+  Foo f10 = {f3}; // copy list initialization
 
   return 0;
 }
  */
-
-// ############################################################
-//  Explicitly define our own copy constructor
-// BEST PRACTICE- Copy constructors should have no side effects beyond copying.
-// BEST PRACTICE- Prefer the implicit copy constructor, unless you have a
-// specific reason to create your own.
-class Fraction {
-private:
-  int m_numerator{0};
-  int m_denominator{1};
-
-public:
-  // Default constructor
-  Fraction(int numerator = 0, int denominator = 1)
-      : m_numerator{numerator}, m_denominator{denominator} {}
-
-  // A copy constructor should not do anything other than copy an object. This
-  // is because the compiler may optimize the copy constructor out in certain
-  // cases. If you are relying on the copy constructor for some behavior other
-  // than just copying, that behavior may or may not occur.
-
-  // Copy constructor
-  // BEST PRACTICE- The copy constructor’s parameter must be a reference
-  Fraction(const Fraction &fraction)
-      // Initialize our members using the corresponding member of the
-      parameter : m_numerator{fraction.m_numerator},
-                  m_denominator{fraction.m_denominator} {
-    std::cout << "Copy constructor called\n"; // just to prove it works
-  }
-
-  // If a class has no copy constructor, the compiler will implicitly generate
-  // one for us. If we prefer, we can explicitly request the compiler create a
-  // default copy constructor for us using the = default syntax:
-  // Fraction(const Fraction &fraction) = default;
-
-  // -Occasionally we run into cases where we do not want objects of a certain
-  // class to be copyable. We can prevent this by marking the copy constructor
-  // function as deleted, using the = delete syntax
-  //  - Delete the copy constructor so no copies can be made
-  // - when the compiler goes to find a constructor to initialize fCopy with f,
-  // it will see that the copy constructor has been deleted. This will cause it
-  // to emit a compile error Fraction(const Fraction &fraction) = delete;
-
-  void print() const {
-    std::cout << "Fraction(" << m_numerator << ", " << m_denominator << ")\n";
-  }
-};
-
-void printFraction(Fraction f) // f is pass by value
-{
-  f.print();
-}
-
-Fraction generateFraction(int n, int d) {
-  Fraction f{n, d};
-  return f;
-}
-
-int main() {
-  Fraction f{5, 3};  // Calls Fraction(int, int) constructor
-  Fraction fCopy{f}; // Calls Fraction(const Fraction&) copy constructor
-
-  f.print();
-  fCopy.print();
-
-  Fraction g{5, 3};
-
-  printFraction(
-      g); // f is copied into the function parameter using copy constructor
-
-  Fraction f2{
-      generateFraction(1, 2)}; // Fraction is returned using copy constructor
-
-  printFraction(
-      f2); // f2 is copied into the function parameter using copy constructor
-
-  return 0;
-}
