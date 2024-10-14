@@ -1,90 +1,119 @@
-// Learncpp.com: section 14.13- Temporary Class Objects
+// Learncpp.com: section 14.14- Introduction to the copy constructor
 
 #include <iostream>
-/*
-class IntPair {
+
+/* // A copy constructor is a constructor that is used to initialize an object
+with
+// an existing object of the same type. After the copy constructor executes, the
+// newly created object should be a copy of the object passed in as the
+// initializer.
+
+class Fraction {
 private:
-  int m_x{};
-  int m_y{};
+  int m_numerator{0};
+  int m_denominator{1};
 
 public:
-  IntPair(int x, int y) : m_x{x}, m_y{y} {}
+  // Default constructor
+  Fraction(int numerator = 0, int denominator = 1)
+      : m_numerator{numerator}, m_denominator{denominator} {}
 
-  int x() const { return m_x; }
-  int y() const { return m_y; }
+  void print() const {
+    std::cout << "Fraction(" << m_numerator << ", " << m_denominator << ")\n";
+  }
 };
 
-void print(IntPair p) { std::cout << "(" << p.x() << ", " << p.y() << ")\n"; }
-
-// Case 1: Create named variable and return
-IntPair ret1() {
-  IntPair p{3, 4};
-  return p; // returns temporary object (initialized using p)
-}
-
-// Case 2: Create temporary IntPair and return
-IntPair ret2() {
-  return IntPair{5, 6}; // returns temporary object (initialized using another
-                        // temporary object)
-}
-
-// Case 3: implicitly convert { 7, 8 } to IntPair and return
-IntPair ret3() {
-  return {7, 8}; // returns temporary object (initialized using another
-                 // temporary object)
-}
-
 int main() {
-  // Case 1: Pass variable
-  IntPair p{3, 4};
-  print(p);
+  Fraction f{5, 3}; // Calls Fraction(int, int) constructor
 
-  // Two common ways to create temporary class objects
+  // invoking the implicit copy constructor to initialize fCopy with f.
 
-  // 1) we’re telling the compiler to construct an IntPair object, and
-  // initializing it with { 5, 6 }. Because this object has no name, it is a
-  // temporary
-  //  Case 2: Construct temporary IntPair and pass to function
-  print(IntPair{5, 6});
+  // By default, the implicit copy constructor will do memberwise
+  // initialization. This means each member will be initialized using the
+  // corresponding member of the class passed in as the initializer.
+  Fraction fCopy{f};
 
-  // 2) we’re also creating a temporary IntPair object to pass to function
-  // print(). However, because we have not explicitly specified what type to
-  // construct, the compiler will deduce the necessary type (IntPair) from the
-  // function parameter, and then implicitly convert { 7, 8 } to an IntPair
-  // object
-  //  Case 3: Implicitly convert { 7, 8 } to a temporary Intpair and pass to
-  //  function
-  print({7, 8});
-
-  print(ret1());
-  print(ret2());
-  print(ret3());
+  f.print();
+  fCopy.print();
 
   return 0;
 }
  */
 
-#include "printString.h"
+// ############################################################
+//  Explicitly define our own copy constructor
+// BEST PRACTICE- Copy constructors should have no side effects beyond copying.
+// BEST PRACTICE- Prefer the implicit copy constructor, unless you have a
+// specific reason to create your own.
+class Fraction {
+private:
+  int m_numerator{0};
+  int m_denominator{1};
 
-#include <string>
-#include <string_view>
+public:
+  // Default constructor
+  Fraction(int numerator = 0, int denominator = 1)
+      : m_numerator{numerator}, m_denominator{denominator} {}
+
+  // A copy constructor should not do anything other than copy an object. This
+  // is because the compiler may optimize the copy constructor out in certain
+  // cases. If you are relying on the copy constructor for some behavior other
+  // than just copying, that behavior may or may not occur.
+
+  // Copy constructor
+  // BEST PRACTICE- The copy constructor’s parameter must be a reference
+  Fraction(const Fraction &fraction)
+      // Initialize our members using the corresponding member of the
+      parameter : m_numerator{fraction.m_numerator},
+                  m_denominator{fraction.m_denominator} {
+    std::cout << "Copy constructor called\n"; // just to prove it works
+  }
+
+  // If a class has no copy constructor, the compiler will implicitly generate
+  // one for us. If we prefer, we can explicitly request the compiler create a
+  // default copy constructor for us using the = default syntax:
+  // Fraction(const Fraction &fraction) = default;
+
+  // -Occasionally we run into cases where we do not want objects of a certain
+  // class to be copyable. We can prevent this by marking the copy constructor
+  // function as deleted, using the = delete syntax
+  //  - Delete the copy constructor so no copies can be made
+  // - when the compiler goes to find a constructor to initialize fCopy with f,
+  // it will see that the copy constructor has been deleted. This will cause it
+  // to emit a compile error Fraction(const Fraction &fraction) = delete;
+
+  void print() const {
+    std::cout << "Fraction(" << m_numerator << ", " << m_denominator << ")\n";
+  }
+};
+
+void printFraction(Fraction f) // f is pass by value
+{
+  f.print();
+}
+
+Fraction generateFraction(int n, int d) {
+  Fraction f{n, d};
+  return f;
+}
 
 int main() {
-  std::string_view sv{"Hello"};
+  Fraction f{5, 3};  // Calls Fraction(int, int) constructor
+  Fraction fCopy{f}; // Calls Fraction(const Fraction&) copy constructor
 
-  // We want to print sv using the printString() function
+  f.print();
+  fCopy.print();
 
-  //    printString(sv); // compile error: a std::string_view won't implicitly
-  //    convert to a std::string
+  Fraction g{5, 3};
 
-  printString(
-      static_cast<std::string>(sv)); // Case 1: static_cast returns a temporary
-                                     // std::string direct-initialized with sv
-  printString(std::string{sv});      // Case 2: explicitly creates a temporary
-                                     // std::string list-initialized with sv
+  printFraction(
+      g); // f is copied into the function parameter using copy constructor
 
-  // printString(std::string(sv)); // Case 3: C-style cast returns temporary
-  // std::string direct-initialized with sv (avoid this one!)
+  Fraction f2{
+      generateFraction(1, 2)}; // Fraction is returned using copy constructor
+
+  printFraction(
+      f2); // f2 is copied into the function parameter using copy constructor
 
   return 0;
 }
