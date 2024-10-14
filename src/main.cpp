@@ -1,125 +1,35 @@
-// Learncpp.com: section 15.1- hidden “this” pointer and member function
-// chaining
+// Learncpp.com: section 15.2- Classes and Header Files
 
-/*
-We use -> to select a member from a pointer to an object. this->m_id is the
-equivalent of (*this).m_id.
-*/
-
-// Inside every member function, the keyword this is a const pointer that holds
-// the address of the current implicit object.
-
-// For non-const member functions
-// this is a const pointer to a non-const value
-// (meaning this cannot be pointed at something else, but the object pointing to
-// may be modified).
-
-// With const member functions
-// this is a const pointer to a const value (meaning the pointer cannot be
-// pointed at something else, nor may the object being pointed to be modified).
-
+#include "Date.h"
 #include <iostream>
-/*
-class Simple {
-private:
-  int m_id{};
 
-public:
-  Simple(int id) : m_id{id} {}
+// Header Files- Unlike functions, which only need a forward declaration to be
+// used, the compiler typically needs to see the full definition of a class (or
+// any program-defined type) in order for the type to be used. This is because
+// the compiler needs to understand how members are declared in order to ensure
+// they are used properly, and it needs to be able to calculate how large
+// objects of that type are in order to instantiate them. So our header files
+// usually contain the full definition of a class rather than just a forward
+// declaration of the class.
 
-  int getID() const { return this->m_id; }
-  void setID(int id) { this->m_id = id; }
+// constructor and print() member functions defined outside the class
+// definition. Note that the prototypes for these member functions still exist
+// inside the class definition (as these functions need to be declared as part
+// of the class type definition), but the actual implementation has been moved
+// outside:
+// * Most often, classes are defined in header files of the same name as the
+// class, and any member functions defined outside of the class are put in a
+// .cpp file of the same name as the class.
 
-  void print() const {
-    std::cout << this->m_id;
-  } // use `this` pointer to access the implicit object and operator-> to select
-    // member m_id
-};
-
+// BEST PRACTICE
+// * Prefer to put your class definitions in a header file with the same name as
+// the class. Trivial member functions (such as access functions, constructors
+// with empty bodies, etc…) can be defined inside the class definition.
+// * Prefer to define non-trivial member functions in a source file with the
+// same name as the class.
 int main() {
-  Simple simple{1};
-  simple.setID(2);
-
-  simple.print();
-
-  return 0;
-}
- */
-/*
-void print() const { std::cout << m_id; }       // implicit use of this
-void print() const { std::cout << this->m_id; } // explicit use of this
-
-How the compiler rewrites functions is an implementation-specific detail, but
-the end-result is something like this:
-*/
-// static void setID(Simple* const this, int id) { this->m_id = id; }
-
-/*
-int main()
-{
-    Simple a{1}; // this = &a inside the Simple constructor
-    Simple b{2}; // this = &b inside the Simple constructor
-    a.setID(3); // this = &a inside member function setID()
-    b.setID(4); // this = &b inside member function setID()
-
-    return 0;
-}
-*/
-
-// #################################
-/* //  Example of where 'this' can be useful
-struct Something {
-  int data{}; // not using m_ prefix because this is a struct
-
-  void setData(int data) {
-    this->data = data; // this->data is the member, data is the local parameter
-  }
-};
- */
-// ########################################
-// Function chaining/ Method chaining
-// it can sometimes be useful to have a member function return the implicit
-// object as a return value. The primary reason to do this is to allow member
-// functions to be “chained” together, so several member functions can be called
-// on the same object in a single expression! This is called function chaining
-// (or method chaining).
-
-class Calc {
-private:
-  int m_value{};
-
-public:
-  Calc &add(int value) {
-    m_value += value;
-    return *this;
-  }
-  Calc &sub(int value) {
-    m_value -= value;
-    return *this;
-  }
-  Calc &mult(int value) {
-    m_value *= value;
-    return *this;
-  }
-
-  int getValue() const { return m_value; }
-
-  // The best way to reset a class back to a default state is to create a
-  // reset() member function, have that function create a new object (using the
-  // default constructor), and then assign that new object to the current
-  // implicit object, like this:
-  void reset() { *this = {}; }
-};
-
-int main() {
-  Calc calc{};
-  calc.add(5).sub(3).mult(4);
-
-  std::cout << calc.getValue() << '\n'; // prints 8
-
-  calc.reset();
-
-  std::cout << calc.getValue() << '\n'; // prints 0
+  const Date d{2015, 10, 14};
+  d.print();
 
   return 0;
 }
