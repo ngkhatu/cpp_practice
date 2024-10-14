@@ -1,81 +1,90 @@
-// Learncpp.com: section 14.12 Delegating Constructors
-
-// Constructors are allowed to delegate (transfer responsibility for)
-// initialization to another constructor from the same class type. This process
-// is sometimes called constructor chaining and such constructors are called
-// delegating constructors.
-
-// To make one constructor delegate initialization to another constructor,
-// simply call the constructor in the member initializer list.
+// Learncpp.com: section 14.13- Temporary Class Objects
 
 #include <iostream>
+/*
+class IntPair {
+private:
+  int m_x{};
+  int m_y{};
+
+public:
+  IntPair(int x, int y) : m_x{x}, m_y{y} {}
+
+  int x() const { return m_x; }
+  int y() const { return m_y; }
+};
+
+void print(IntPair p) { std::cout << "(" << p.x() << ", " << p.y() << ")\n"; }
+
+// Case 1: Create named variable and return
+IntPair ret1() {
+  IntPair p{3, 4};
+  return p; // returns temporary object (initialized using p)
+}
+
+// Case 2: Create temporary IntPair and return
+IntPair ret2() {
+  return IntPair{5, 6}; // returns temporary object (initialized using another
+                        // temporary object)
+}
+
+// Case 3: implicitly convert { 7, 8 } to IntPair and return
+IntPair ret3() {
+  return {7, 8}; // returns temporary object (initialized using another
+                 // temporary object)
+}
+
+int main() {
+  // Case 1: Pass variable
+  IntPair p{3, 4};
+  print(p);
+
+  // Two common ways to create temporary class objects
+
+  // 1) we’re telling the compiler to construct an IntPair object, and
+  // initializing it with { 5, 6 }. Because this object has no name, it is a
+  // temporary
+  //  Case 2: Construct temporary IntPair and pass to function
+  print(IntPair{5, 6});
+
+  // 2) we’re also creating a temporary IntPair object to pass to function
+  // print(). However, because we have not explicitly specified what type to
+  // construct, the compiler will deduce the necessary type (IntPair) from the
+  // function parameter, and then implicitly convert { 7, 8 } to an IntPair
+  // object
+  //  Case 3: Implicitly convert { 7, 8 } to a temporary Intpair and pass to
+  //  function
+  print({7, 8});
+
+  print(ret1());
+  print(ret2());
+  print(ret3());
+
+  return 0;
+}
+ */
+
+#include "printString.h"
+
 #include <string>
 #include <string_view>
 
-/*
-// BEST PRACTICE- If you have multiple constructors, consider whether you can
-// use delegating constructors to reduce duplicate code.
-class Employee {
-private:
-  std::string m_name{};
-  int m_id{0};
-
-public:
-  // First, a constructor that delegates to another constructor is not allowed
-  // to do any member initialization itself. So your constructors can delegate
-  // or initialize, but not both.
-  // Second, it’s possible for one constructor to delegate to another
-  // constructor, which delegates back to the first constructor. This forms an
-  // infinite loop, and will cause your program to run out of stack space and
-  // crash. You can avoid this by ensuring all of your constructors resolve to a
-  // non-delegating constructor
-  Employee(std::string_view name)
-      : Employee{name, 0}
-  // delegate initialization to Employee(std::string_view, int) constructor
-  {}
-  // The downside of this method is that it sometimes requires duplication of
-  // initialization values. In the delegation to the Employee(std::string_view,
-  // int) constructor, we need an initialization value for the int parameter. We
-  // had to hardcode literal 0, as there is no way to reference the default
-  // member initializer
-
-  Employee(std::string_view name, int id)
-      : m_name{name}, m_id{id} // actually initializes the members
-  {
-    std::cout << "Employee " << m_name << " created\n";
-  }
-};
-
 int main() {
-  Employee e1{"James"};
-  Employee e2{"Dave", 42};
-}
-*/
-// ##################################################################
-// When we have an initialization value that is used in multiple places (e.g. as
-// a default member initializer and a default argument for a constructor
-// parameter), we can instead define a named constant and use that wherever our
-// initialization value is needed. This allows the initialization value to be
-// defined in one place.
+  std::string_view sv{"Hello"};
 
-// The best way to do this is to use a static constexpr member inside the class:
+  // We want to print sv using the printString() function
 
-class Employee {
-private:
-  static constexpr int default_id{
-      0}; // define a named constant with our desired initialization value
+  //    printString(sv); // compile error: a std::string_view won't implicitly
+  //    convert to a std::string
 
-  std::string m_name{};
-  int m_id{default_id}; // we can use it here
+  printString(
+      static_cast<std::string>(sv)); // Case 1: static_cast returns a temporary
+                                     // std::string direct-initialized with sv
+  printString(std::string{sv});      // Case 2: explicitly creates a temporary
+                                     // std::string list-initialized with sv
 
-public:
-  Employee(std::string_view name, int id = default_id) // and we can use it here
-      : m_name{name}, m_id{id} {
-    std::cout << "Employee " << m_name << " created\n";
-  }
-};
+  // printString(std::string(sv)); // Case 3: C-style cast returns temporary
+  // std::string direct-initialized with sv (avoid this one!)
 
-int main() {
-  Employee e1{"James"};
-  Employee e2{"Dave", 42};
+  return 0;
 }
