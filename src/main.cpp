@@ -1,130 +1,152 @@
-// Learncpp.com: section 15.3- Nested types (Member types)
+// Learncpp.com: section 10.7- Typedefs and type aliases
+
+// When the compiler encounters a type alias name, it will substitute in the
+// aliased type
 
 #include <iostream>
-#include <string>
-#include <string_view>
-
-// Class types
-// * Data members
-// * Member Functions
-// * Nested Types (Member Types)
-//  -To create a nested type, you simply define the type inside the class, under
-//  the appropriate access specifier
 /*
-enum class FruitType { apple, banana, cherry };
-
-class Fruit {
-
-private:
-  FruitType m_type{};
-  int m_percentageEaten{0};
-
-public:
-  Fruit(FruitType type) : m_type{type} {}
-
-  FruitType getType() { return m_type; }
-  int getPercentageEaten() { return m_percentageEaten; }
-
-  bool isCherry() { return m_type == FruitType::cherry; }
-};
-
 int main() {
 
-  Fruit apple{FruitType::apple};
+  // * using is a keyword that creates an alias for an existing data type
+  //  - followed by a name for the type alias, followed by an equals sign and an
+  // existing data type
 
-  if (apple.getType() == FruitType::apple)
-    std::cout << "I am an apple";
-  else
-    std::cout << "I am not an apple";
+  using Distance = double; // define Distance as an alias for type double
+  // Once defined, a type alias can be used anywhere a type is needed. For
+  // example, we can create a variable with the type alias name as the type
+  Distance milesToDestination{3.4}; // defines a variable of type double
 
+  std::cout << milesToDestination << '\n'; // prints a double value
+
+  return 0;
+} */
+
+/*
+Naming type aliases
+
+Historically, there hasn’t been a lot of consistency in how type aliases have
+been named. There are three common naming conventions (and you will run across
+all of them):
+
+1) Type aliases that end in a “_t” suffix (the “_t” is short for “type”). This
+convention is often used by the standard library for globally scoped type names
+(like size_t and nullptr_t).
+
+* This convention was inherited from C, and used to
+be the most popular when defining your own type aliases (and sometimes other
+types), but has fallen out of favor in modern C++. Note that POSIX reserves the
+“_t” suffix for globally scoped type names, so using this convention may cause
+type naming conflicts on POSIX systems.
+
+2) Type aliases that end in a “_type” suffix. This convention is used by some
+standard library types (like std::string) to name nested type aliases (e.g.
+std::string::size_type).
+* But many such nested type aliases do not use a suffix
+at all (e.g. std::string::iterator), so this usage is inconsistent at best.
+
+3) Type aliases that use no suffix.
+* In modern C++, the convention is to name type aliases (or any other type) that
+you define yourself starting with a capital letter, and using no suffix. The
+capital letter helps differentiate the names of types from the names of
+variables and functions (which start with a lower case letter), and prevents
+naming collisions between them.
+*/
+
+/*
+// BEST PRACTICE- Name your type aliases starting with a capital letter and do
+not use a suffix
+// (unless you have a specific reason to do otherwise).
+// void printDistance(Distance distance); // Distance is some defined type
+// In this case, Distance is the type, and distance is the parameter name. C++
+// is case-sensitive, so this is fine. */
+
+// ################################################################
+/* // Type alias are not distinct types
+
+// An alias does not actually define a new, distinct type (one that is
+// considered separate from other types) -- it just introduces a new identifier
+// for an existing type. A type alias is completely interchangeable with the
+// aliased type.
+
+// This allows us to do things that are syntactically valid but semantically
+// meaningless
+
+#include "mytypes.h"
+
+int main() {
+  // Because scope is a property of an identifier, type alias identifiers follow
+  // the same scoping rules as variable identifiers
+  // using Miles = long; // define Miles as an alias for type long
+  // using Speed = long; // define Speed as an alias for type long
+
+  Miles distance{5}; // distance is actually just a long
+  Speed mhz{3200};   // mhz is actually just a long
+
+  // The following is syntactically valid (but semantically meaningless)
+  distance = mhz;
+
+  // Because the compiler does not prevent these kinds of semantic errors for
+  // type aliases, we say that aliases are not type safe. In spite of that, they
+  // are still useful.
+
+  // WARNING- Care must be taken not to mix values of aliases that are intended
+  // to be semantically distinct.
+
+  {
+    using namespace std;
+    cout << distance << mhz << endl;
+  }
   return 0;
 }
  */
 
 // #################################################
-/*
-// BEST PRACTICE- Define any nested types at the top of your class type.
+/* // A typedef (which is short for “type definition”) is an older way of
+creating
+// an alias for a type
+// - the name “typedef” suggests that a new type is being defined, but that’s
+// not true. A typedef is just an alias.
 
-// class types act as a scope region for names declared within, just as
-// namespaces do. Therefore
-// * the fully qualified name of Type is Fruit::Type, and
-// * the fully qualified name of the apple enumerator is Fruit::apple
+// BEST PRACTICE- Prefer type aliases over typedefs.
 
-class Fruit {
+// The following aliases are identical
+typedef long Miles;
+using Miles = long;
 
-  // Type is defined under the public access specifier, so that the type name
-  // and enumerators can be directly accessed by the public.
-public:
-  // FruitType has been moved inside the class, under the public access
-  // specifier We've also renamed it Type and made it an enum rather than an
-  // enum class
-
-  // Nested type names must be fully defined before they can be used, so they
-  // are usually defined first
-  enum Type { apple, banana, cherry };
-
-private:
-  Type m_type{};
-  int m_percentageEaten{0};
-
-public:
-  Fruit(Type type) : m_type{type} {}
-
-  Type getType() { return m_type; }
-  int getPercentageEaten() { return m_percentageEaten; }
-
-  // Within the members of the class, we do not need to use the fully qualified
-  // name
-  bool isCherry() {
-    return m_type == cherry;
-  } // Inside members of Fruit, we no longer need to prefix enumerators with
-    // FruitType::
-};
-
-int main() {
-  // Outside the class, we must use the fully qualified name (e.g.
-  // Fruit::apple).
-  Fruit apple{Fruit::apple};
-
-  if (apple.getType() == Fruit::apple)
-    std::cout << "I am an apple";
-  else
-    std::cout << "I am not an apple";
-
-  return 0;
-}
-
-// Since the class itself is now acting as a scope region, it’s somewhat
-// redundant to use a scoped enumerator as well.
-// * unscoped enum- access enumerators as Fruit::apple
-// * scoped enum- access enumerators as Fruit::Type::apple
+typedef int (*FcnType)(double, char);  // FcnType hard to find
+using FcnType = int (*)(double, char); // FcnType easier to find
  */
-// ###########################################################
 
-// Class types can also contain nested typedefs or type aliases:
-class Employee {
-public:
-  using IDType = int;
+// ####################################################
+// Using type aliases to make complex types easier to read
 
-private:
-  std::string m_name{};
-  IDType m_id{};
-  double m_wage{};
+#include <string>  // for std::string
+#include <utility> // for std::pair
+#include <vector>  // for std::vector
 
-public:
-  Employee(std::string_view name, IDType id, double wage)
-      : m_name{name}, m_id{id}, m_wage{wage} {}
-
-  const std::string &getName() { return m_name; }
-  IDType getId() { return m_id; } // can use unqualified name within class
-};
+// easier to use a type alias
+using VectPairSI =
+    std::vector<std::pair<std::string, int>>; // make VectPairSI an alias for
+                                              // this crazy type
+// bool hasDuplicates(std::vector<std::pair<std::string, int>> pairlist)
+bool hasDuplicates(VectPairSI pairlist) {
+  // some code here
+  return false;
+}
 
 int main() {
-  Employee john{"John", 1, 45000};
-  Employee::IDType id{
-      john.getId()}; // must use fully qualified name outside class
-
-  std::cout << john.getName() << " has id: " << id << '\n';
+  // std::vector<std::pair<std::string, int>> pairlist;
+  VectPairSI pairlist;
 
   return 0;
 }
+
+// #####################################################
+// BEST PRACTICE- Use type aliases judiciously, when they provide a clear
+// benefit to code readability or code maintenance.
+
+// Using type aliases to document the meaning of a value
+
+// Type aliases can also help with code documentation and comprehension.
+using TestScore = int;
+TestScore gradeTest();
