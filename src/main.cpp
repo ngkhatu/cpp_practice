@@ -1,85 +1,128 @@
-// Learncpp.com: section 13.2- Unscoped enumerations
+// Learncpp.com: section 13.3 Unscoped enumerator integral conversions
+
 /*
-// Define a new unscoped enumeration named Color
-enum Color {
-  // Here are the enumerators
-  // These symbolic constants define all the possible values this type can hold
-  // Each enumerator is separated by a comma, not a semicolon
-  red,
-  green,
-  blue, // trailing comma optional but recommended
-}; // the enum definition must end with a semicolon
+Note in this case, horse and giraffe have been given the same value. When this
+happens, the enumerators become non-distinct -- essentially, horse and giraffe
+are interchangeable. Although C++ allows it, assigning the same value to two
+enumerators in the same enumeration should generally be avoided.
 
-int main() {
-  // Define a few variables of enumerated type Color
-  Color apple{red};   // my apple is red
-  Color shirt{green}; // my shirt is green
-  Color cup{blue};    // my cup is blue
-
-  // Color socks{white}; // error: white is not an enumerator of Color
-  // Color hat{2};       // error: 2 is not an enumerator of Color
-
-  return 0;
-} */
-
-// Enumerators are implicitly constexpr.
-/*
-using Color = int; // define a type alias named Color
-
-// The following color values should be used for a Color
-constexpr Color red{ 0 };
-constexpr Color green{ 1 };
-constexpr Color blue{ 2 };
-
-int main()
-{
-    Color appleColor{ red };
-    Color shirtColor{ green };
-
-    return 0;
-}
+Most of the time, the default values for enumerators will be exactly what you
+want, so do not provide your own values unless you have a specific reason to do
+so
 */
 
-// Scoped Enum
-
-// BEST PRACTICE- Prefer putting your enumerations inside a named scope region
-// (such as a namespace or class) so the enumerators don’t pollute the global
-// namespace.
-
+// BEST PRACTICE- Avoid assigning explicit values to your enumerators unless you
+// have a compelling reason to do so.
 #include <iostream>
 
-namespace Color {
-// The names Color, red, blue, and green are defined inside namespace Color
-enum Color {
-  red,
-  green,
-  blue,
+/* enum Animal {
+  cat = -3, // -3
+  dog,      // -2
+  pig,      // -1
+  // note: no enumerator with value 0 in this list
+  horse = 5,   // 5
+  giraffe = 5, // 5
+  // If there is an enumerator with value 0, value-initialization defaults the
+  // enumeration to the meaning of that enumerator. For example, using the prior
+  // enum Color example, a value-initialized Color will default to black). For
+  // this reason, it is a good idea to consider making the enumerator with value
+  // 0 the one that represents the best default meaning for your enumeration
+  chicken = 0, // 6
 };
-} // namespace Color
-
-namespace Feeling {
-enum Feeling {
-  happy,
-  tired,
-  blue, // Feeling::blue doesn't collide with Color::blue
-};
-}
 
 int main() {
-  Color::Color paint{Color::blue};
-  Feeling::Feeling me{Feeling::blue};
+  Animal a{};     // value-initialization zero-initializes a to value 0
+  std::cout << a; // prints 0
 
-  switch (paint) {
-  case Color::red:
-    std::cout << "red" << std::endl;
-    break;
-  case Color::green:
-    std::cout << "green" << std::endl;
-    break;
-  case Color::blue:
-    std::cout << "blue" << std::endl;
-    break;
-  }
+  // If there is no enumerator with value 0, value-initialization makes it easy
+  // to create a semantically invalid enumeration. In such cases, we recommend
+  // adding an “invalid” or “unknown” enumerator with value 0 so that you have
+  // documentation for the meaning of that state, and a name for that state that
+  // you can explicitly handle.
+
+  return 0;
+}
+ */
+// #######################################################
+/* // an unscoped enumeration will implicitly convert to an integral value.
+Because
+// enumerators are compile-time constants, this is a constexpr conversion
+enum Color {
+  black,   // assigned 0
+  red,     // assigned 1
+  blue,    // assigned 2
+  green,   // assigned 3
+  white,   // assigned 4
+  cyan,    // assigned 5
+  yellow,  // assigned 6
+  magenta, // assigned 7
+};
+
+int main() {
+  Color shirt{blue};
+
+  std::cout << "Your shirt is " << shirt << '\n'; // what does this do?
+
+  return 0;
+}
+ */
+/*
+#include <cstdint> // for std::int8_t
+#include <iostream>
+// It is possible to explicitly specify an underlying type for an enumeration.
+// The underlying type must be an integral type. For example, if you are working
+// in some bandwidth-sensitive context (e.g. sending data over a network) you
+// may want to specify a smaller type for your enumeration:
+
+// BEST PRACTICE- Specify the base type of an enumeration only when necessary.
+
+// Use an 8-bit integer as the enum underlying type
+enum Color : std::int8_t {
+  black,
+  red,
+  blue,
+};
+
+enum Pet // no specified base
+{
+  cat,   // assigned 0
+  dog,   // assigned 1
+  pig,   // assigned 2
+  whale, // assigned 3
+};
+
+int main() {
+  Color c{black};
+  std::cout << sizeof(c) << '\n'; // prints 1 (byte)
+
+  Pet pet{
+      2};  // compile error: integer value 2 won't implicitly convert to a Pet
+  pet = 3; // compile error: integer value 3 won't implicitly convert to a Pet
+  Pet pet{static_cast<Pet>(2)}; // convert integer 2 to a Pet
+  pet = static_cast<Pet>(3);    // our pig evolved into a whale!
+
+  return 0;
+}
+ */
+
+// if an unscoped enumeration has an explicitly specified base, then the
+// compiler will allow you to list initialize an unscoped enumeration using an
+// integral value:
+enum Pet : int // we've specified a base
+{
+  cat,   // assigned 0
+  dog,   // assigned 1
+  pig,   // assigned 2
+  whale, // assigned 3
+};
+
+int main() {
+  Pet pet1{2}; // ok: can brace initialize unscoped enumeration with specified
+               // base with integer (C++17)
+  // Pet pet2(2);  // compile error: cannot direct initialize with integer
+  // Pet pet3 = 2; // compile error: cannot copy initialize with integer
+
+  // pet1 = 3; // compile error: cannot assign with integer
 
   return 0;
 }
