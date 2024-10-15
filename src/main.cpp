@@ -1,35 +1,130 @@
-// Learncpp.com: section 15.2- Classes and Header Files
+// Learncpp.com: section 15.3- Nested types (Member types)
 
-#include "Date.h"
 #include <iostream>
+#include <string>
+#include <string_view>
 
-// Header Files- Unlike functions, which only need a forward declaration to be
-// used, the compiler typically needs to see the full definition of a class (or
-// any program-defined type) in order for the type to be used. This is because
-// the compiler needs to understand how members are declared in order to ensure
-// they are used properly, and it needs to be able to calculate how large
-// objects of that type are in order to instantiate them. So our header files
-// usually contain the full definition of a class rather than just a forward
-// declaration of the class.
+// Class types
+// * Data members
+// * Member Functions
+// * Nested Types (Member Types)
+//  -To create a nested type, you simply define the type inside the class, under
+//  the appropriate access specifier
+/*
+enum class FruitType { apple, banana, cherry };
 
-// constructor and print() member functions defined outside the class
-// definition. Note that the prototypes for these member functions still exist
-// inside the class definition (as these functions need to be declared as part
-// of the class type definition), but the actual implementation has been moved
-// outside:
-// * Most often, classes are defined in header files of the same name as the
-// class, and any member functions defined outside of the class are put in a
-// .cpp file of the same name as the class.
+class Fruit {
 
-// BEST PRACTICE
-// * Prefer to put your class definitions in a header file with the same name as
-// the class. Trivial member functions (such as access functions, constructors
-// with empty bodies, etc…) can be defined inside the class definition.
-// * Prefer to define non-trivial member functions in a source file with the
-// same name as the class.
+private:
+  FruitType m_type{};
+  int m_percentageEaten{0};
+
+public:
+  Fruit(FruitType type) : m_type{type} {}
+
+  FruitType getType() { return m_type; }
+  int getPercentageEaten() { return m_percentageEaten; }
+
+  bool isCherry() { return m_type == FruitType::cherry; }
+};
+
 int main() {
-  const Date d{2015, 10, 14};
-  d.print();
+
+  Fruit apple{FruitType::apple};
+
+  if (apple.getType() == FruitType::apple)
+    std::cout << "I am an apple";
+  else
+    std::cout << "I am not an apple";
+
+  return 0;
+}
+ */
+
+// #################################################
+/*
+// BEST PRACTICE- Define any nested types at the top of your class type.
+
+// class types act as a scope region for names declared within, just as
+// namespaces do. Therefore
+// * the fully qualified name of Type is Fruit::Type, and
+// * the fully qualified name of the apple enumerator is Fruit::apple
+
+class Fruit {
+
+  // Type is defined under the public access specifier, so that the type name
+  // and enumerators can be directly accessed by the public.
+public:
+  // FruitType has been moved inside the class, under the public access
+  // specifier We've also renamed it Type and made it an enum rather than an
+  // enum class
+
+  // Nested type names must be fully defined before they can be used, so they
+  // are usually defined first
+  enum Type { apple, banana, cherry };
+
+private:
+  Type m_type{};
+  int m_percentageEaten{0};
+
+public:
+  Fruit(Type type) : m_type{type} {}
+
+  Type getType() { return m_type; }
+  int getPercentageEaten() { return m_percentageEaten; }
+
+  // Within the members of the class, we do not need to use the fully qualified
+  // name
+  bool isCherry() {
+    return m_type == cherry;
+  } // Inside members of Fruit, we no longer need to prefix enumerators with
+    // FruitType::
+};
+
+int main() {
+  // Outside the class, we must use the fully qualified name (e.g.
+  // Fruit::apple).
+  Fruit apple{Fruit::apple};
+
+  if (apple.getType() == Fruit::apple)
+    std::cout << "I am an apple";
+  else
+    std::cout << "I am not an apple";
+
+  return 0;
+}
+
+// Since the class itself is now acting as a scope region, it’s somewhat
+// redundant to use a scoped enumerator as well.
+// * unscoped enum- access enumerators as Fruit::apple
+// * scoped enum- access enumerators as Fruit::Type::apple
+ */
+// ###########################################################
+
+// Class types can also contain nested typedefs or type aliases:
+class Employee {
+public:
+  using IDType = int;
+
+private:
+  std::string m_name{};
+  IDType m_id{};
+  double m_wage{};
+
+public:
+  Employee(std::string_view name, IDType id, double wage)
+      : m_name{name}, m_id{id}, m_wage{wage} {}
+
+  const std::string &getName() { return m_name; }
+  IDType getId() { return m_id; } // can use unqualified name within class
+};
+
+int main() {
+  Employee john{"John", 1, 45000};
+  Employee::IDType id{
+      john.getId()}; // must use fully qualified name outside class
+
+  std::cout << john.getName() << " has id: " << id << '\n';
 
   return 0;
 }
