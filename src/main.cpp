@@ -1,136 +1,57 @@
-// Learncpp.com: section 13.14- Class template argument deduction (CTAD) and
-// deduction guides
+// Learncpp.com: section 13.15- Alias templates
 
 #include <iostream>
-#include <utility>
-// for std::pair
-/*
-// define our own Pair type
-template <typename T, typename U> struct Pair {
-  T first{};
-  U second{};
-};
-
-// provide the compiler with a deduction guide, which tells the compiler how to
-// deduce the template arguments for a given class template
-// * Here's a deduction guide for our Pair (needed in C++17 only)
-/// Pair objects initialized with arguments of type T and U should deduce to
-// Pair<T, U>
-template <typename T, typename U> Pair(T, U) -> Pair<T, U>;
-
-int main() {
-  std::pair<int, int> p1{1, 2}; // explicitly specify class template
-                                // std::pair<int, int> (C++11 onward)
-  std::pair p2{1, 2}; // CTAD used to deduce std::pair<int, int> from the
-                      // initializers (C++17)
-
-  // CTAD is only performed if no template argument list is present. Therefore,
-  // both of the following are errors:
-    //std::pair p3{1, 2}; // error: too few template arguments, both arguments
-not deduced
-  //std::pair<int> p4{3, 4}; // error: too few template arguments, second
-argument not deduced
-
-  // Since CTAD is a form of type deduction, we can use literal suffixes to
-  // change the deduced type:
-  std::pair p5{3.4f, 5.6f}; // deduced to pair<float, float>
-  std::pair p6{1u, 2u};     // deduced to pair<unsigned int, unsigned int>
-
-  Pair<int, int> p7{
-      1, 2};     // ok: we're explicitly specifying the template arguments
-  Pair p8{1, 2}; // compile error in C++17 (okay in C++20) CTAD used to deduce
-                // Pair<int, int> from the initializers (C++17)
-
-  return 0;
-}
-*/
 
 /* template <typename T> struct Pair {
   T first{};
   T second{};
 };
 
-// Here's a deduction guide for our Pair (needed in C++17 only)
-// Pair objects initialized with arguments of type T and T should deduce to
-// Pair<T>
-template <typename T> Pair(T, T) -> Pair<T>;
-
-int main() {
-  Pair<int> p1{1,
-               2}; // explicitly specify class template Pair<int> (C++11 onward)
-  Pair p2{1, 2}; // CTAD used to deduce Pair<int> from the initializers (C++17)
-
-  return 0;
-}
- */
-
-/* // template parameters can be given default values. These will be used when
-the
-// template parameter isn’t explicitly specified and can’t be deduced.
-template <typename T = int, typename U = int> // default T and U to type int
-struct Pair {
-  T first{};
-  U second{};
-};
-
-template <typename T, typename U> Pair(T, U) -> Pair<T, U>;
-
-int main() {
-  Pair<int, int> p1{
-      1, 2}; // explicitly specify class template Pair<int, int> (C++11 onward)
-  Pair p2{
-      1, 2}; // CTAD used to deduce Pair<int, int> from the initializers (C++17)
-
-  Pair p3; // uses default Pair<int, int>
-
-  return 0;
-}
- */
-
-/* // for std::pair
-
-// When initializing the member of a class type using non-static member
-// initialization, CTAD will not work in this context. All template arguments
-// must be explicitly specified:
-struct Foo {
-  std::pair<int, int> p1{1, 2}; // ok, template arguments explicitly specified
-  std::pair p2{1, 2}; // compile error, CTAD can't be used in this context
-};
-
-int main() {
-  std::pair p3{1, 2}; // ok, CTAD can be used here
-  return 0;
-}
- */
-
-/* // CTAD stands for class template argument deduction, not class template
-// parameter deduction, so it will only deduce the type of template arguments,
-// not template parameters. Therefore, CTAD can’t be used in function
-// parameters.
-void print(std::pair p) // compile error, CTAD can't be used here
-{
+template <typename T> void print(const Pair<T> &p) {
   std::cout << p.first << ' ' << p.second << '\n';
 }
 
 int main() {
-  std::pair p{1, 2}; // p deduced to std::pair<int, int>
+  // Such aliases can be defined locally (e.g. inside a function) or globally
+  using Point = Pair<int>; // create normal type alias
+  Point p{1, 2};           // compiler replaces this with Pair<int>
+
   print(p);
 
   return 0;
-} */
-// ############################
-// Use a template instead
+}
+ */
 
+// Alias Template- template that can be used to instantiate type aliases. Just
+// like type aliases do not define distinct types, alias templates do not define
+// distinct types
 #include <iostream>
-#include <utility>
 
-template <typename T, typename U> void print(std::pair<T, U> p) {
-  std::cout << p.first << ' ' << p.second << '\n';
+template <typename T> struct Pair {
+  T first{};
+  T second{};
+};
+
+// Here's our alias template
+// Alias templates must be defined in global scope
+template <typename T> using Coord = Pair<T>; // Coord is an alias for Pair<T>
+
+// Our print function template needs to know that Coord's template parameter T
+// is a type template parameter
+template <typename T> void print(const Coord<T> &c) {
+  std::cout << c.first << ' ' << c.second << '\n';
 }
 
 int main() {
-  std::pair p{1, 2}; // p deduced to std::pair<int, int>
-  print(p);
+  Coord<int> p1{
+      1,
+      2}; // Pre C++-20: We must explicitly specify all type template argument
+  // Coord p2{1, 2}; // In C++20, we can use alias template deduction to deduce
+  // the
+  //  template arguments in cases where CTAD works
+
+  std::cout << p1.first << ' ' << p1.second << '\n';
+  // print(p2);
 
   return 0;
 }
