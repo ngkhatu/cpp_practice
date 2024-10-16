@@ -1,129 +1,136 @@
-// Learncpp.com: section 13.13- Class Templates
-
-// a class template is a template definition for instantiating class types
+// Learncpp.com: section 13.14- Class template argument deduction (CTAD) and
+// deduction guides
 
 #include <iostream>
-
+#include <utility>
+// for std::pair
 /*
-template <typename T> struct Pair {
+// define our own Pair type
+template <typename T, typename U> struct Pair {
+  T first{};
+  U second{};
+};
+
+// provide the compiler with a deduction guide, which tells the compiler how to
+// deduce the template arguments for a given class template
+// * Here's a deduction guide for our Pair (needed in C++17 only)
+/// Pair objects initialized with arguments of type T and U should deduce to
+// Pair<T, U>
+template <typename T, typename U> Pair(T, U) -> Pair<T, U>;
+
+int main() {
+  std::pair<int, int> p1{1, 2}; // explicitly specify class template
+                                // std::pair<int, int> (C++11 onward)
+  std::pair p2{1, 2}; // CTAD used to deduce std::pair<int, int> from the
+                      // initializers (C++17)
+
+  // CTAD is only performed if no template argument list is present. Therefore,
+  // both of the following are errors:
+    //std::pair p3{1, 2}; // error: too few template arguments, both arguments
+not deduced
+  //std::pair<int> p4{3, 4}; // error: too few template arguments, second
+argument not deduced
+
+  // Since CTAD is a form of type deduction, we can use literal suffixes to
+  // change the deduced type:
+  std::pair p5{3.4f, 5.6f}; // deduced to pair<float, float>
+  std::pair p6{1u, 2u};     // deduced to pair<unsigned int, unsigned int>
+
+  Pair<int, int> p7{
+      1, 2};     // ok: we're explicitly specifying the template arguments
+  Pair p8{1, 2}; // compile error in C++17 (okay in C++20) CTAD used to deduce
+                // Pair<int, int> from the initializers (C++17)
+
+  return 0;
+}
+*/
+
+/* template <typename T> struct Pair {
   T first{};
   T second{};
 };
 
-template <typename T> constexpr T max(Pair<T> p) {
-  return (p.first < p.second ? p.second : p.first);
-}
-
+// Here's a deduction guide for our Pair (needed in C++17 only)
+// Pair objects initialized with arguments of type T and T should deduce to
+// Pair<T>
+template <typename T> Pair(T, T) -> Pair<T>;
 
 int main() {
-  Pair<int> p1{5, 6}; // instantiates Pair<int> and creates object p1
-  std::cout << p1.first << ' ' << p1.second << '\n';
-  std::cout << max<int>(p1) << " is larger\n"; // explicit call to max<int>
-
-  Pair<double> p2{1.2, 3.4}; // instantiates Pair<double> and creates object p2
-  std::cout << p2.first << ' ' << p2.second << '\n';
-  std::cout << max(p2) << " is larger\n"; // call to max<double> using template
-                                          // argument deduction (prefer this)
-
-  Pair<double> p3{
-      7.8, 9.0}; // creates object p3 using prior definition for Pair<double>
-  std::cout << p3.first << ' ' << p3.second << '\n';
+  Pair<int> p1{1,
+               2}; // explicitly specify class template Pair<int> (C++11 onward)
+  Pair p2{1, 2}; // CTAD used to deduce Pair<int> from the initializers (C++17)
 
   return 0;
 }
  */
 
-/* template <typename T, typename U> struct Pair {
+/* // template parameters can be given default values. These will be used when
+the
+// template parameter isn’t explicitly specified and can’t be deduced.
+template <typename T = int, typename U = int> // default T and U to type int
+struct Pair {
   T first{};
   U second{};
 };
 
-template <typename T, typename U> void print(Pair<T, U> p) {
-  std::cout << '[' << p.first << ", " << p.second << ']';
-}
+template <typename T, typename U> Pair(T, U) -> Pair<T, U>;
 
 int main() {
-  Pair<int, double> p1{1, 2.3}; // a pair holding an int and a double
-  Pair<double, int> p2{4.5, 6}; // a pair holding a double and an int
-  Pair<int, int> p3{7, 8};      // a pair holding two ints
+  Pair<int, int> p1{
+      1, 2}; // explicitly specify class template Pair<int, int> (C++11 onward)
+  Pair p2{
+      1, 2}; // CTAD used to deduce Pair<int, int> from the initializers (C++17)
 
-  print(p2);
+  Pair p3; // uses default Pair<int, int>
 
   return 0;
 }
  */
 
-/* template <typename T, typename U> struct Pair {
-  T first{};
-  U second{};
+/* // for std::pair
+
+// When initializing the member of a class type using non-static member
+// initialization, CTAD will not work in this context. All template arguments
+// must be explicitly specified:
+struct Foo {
+  std::pair<int, int> p1{1, 2}; // ok, template arguments explicitly specified
+  std::pair p2{1, 2}; // compile error, CTAD can't be used in this context
 };
 
-struct Point {
-  int first{};
-  int second{};
-};
+int main() {
+  std::pair p3{1, 2}; // ok, CTAD can be used here
+  return 0;
+}
+ */
 
-template <typename T>
-void print(T p) // type template parameter will match anything
+/* // CTAD stands for class template argument deduction, not class template
+// parameter deduction, so it will only deduce the type of template arguments,
+// not template parameters. Therefore, CTAD can’t be used in function
+// parameters.
+void print(std::pair p) // compile error, CTAD can't be used here
 {
-  std::cout << '[' << p.first << ", " << p.second
-            << ']'; // will only compile if type has first and second members
+  std::cout << p.first << ' ' << p.second << '\n';
 }
 
 int main() {
-  Pair<double, int> p1{4.5, 6};
-  print(p1); // matches print(Pair<double, int>)
-
-  std::cout << '\n';
-
-  Point p2{7, 8};
-  print(p2); // matches print(Point)
-
-  std::cout << '\n';
+  std::pair p{1, 2}; // p deduced to std::pair<int, int>
+  print(p);
 
   return 0;
-}
- */
-// ###################################################
-/* //  Because working with pairs of data is common, the C++ standard library
-//  contains a class template named std::pair (in the <utility> header) that is
-//  defined identically to the Pair class template with multiple template types
-//  in the preceding section. In fact, we can swap out the pair struct we
-//  developed for std::pair:
+} */
+// ############################
+// Use a template instead
 
+#include <iostream>
 #include <utility>
 
 template <typename T, typename U> void print(std::pair<T, U> p) {
-  std::cout << '[' << p.first << ", " << p.second << ']';
+  std::cout << p.first << ' ' << p.second << '\n';
 }
 
 int main() {
-  std::pair<int, double> p1{1, 2.3}; // a pair holding an int and a double
-  std::pair<double, int> p2{4.5, 6}; // a pair holding a double and an int
-  std::pair<int, int> p3{7, 8};      // a pair holding two ints
-
-  print(p2);
-
-  return 0;
-}
- */
-
-// #######################################################
-#include "pair.h"
-#include <iostream>
-
-// Just like function templates, class templates are typically defined in header
-// files so they can be included into any code file that needs them. Both
-// template definitions and type definitions are exempt from the one-definition
-// rule, so this won’t cause problems:
-
-void foo(); // forward declaration for function foo()
-
-int main() {
-  Pair<double> p2{3.4, 5.6};
-  std::cout << max(p2) << " is larger\n";
-
-  foo();
+  std::pair p{1, 2}; // p deduced to std::pair<int, int>
+  print(p);
 
   return 0;
 }

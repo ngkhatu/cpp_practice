@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 
-add_executable(Tutorial main.cpp foo.cpp)
+add_executable(Tutorial main.cpp a.cpp)
 
 #[==[
 # specify where the executable target should look for include files
