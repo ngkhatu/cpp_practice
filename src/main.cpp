@@ -1,186 +1,62 @@
-// Learncpp.com: section 15.3- Nested types (Member types)/ Nested class in
-// class
+// Learncpp.com: section 15.4- Introduction to destructors
+
+// Destructors are designed to allow a class to do any necessary clean up before
+// an object of the class is destroyed.
+
+/*
+Like constructors, destructors have specific naming rules:
+
+1) The destructor must have the same name as the class, preceded by a tilde (~).
+2) The destructor can not take arguments.
+3) The destructor has no return type.
+A class can only have a single destructor.
+
+Generally you should not call a destructor explicitly (as it will be called
+automatically when the object is destroyed), since there are rarely cases where
+you’d want to clean up an object more than once.
+*/
 
 #include <iostream>
-#include <string>
-#include <string_view>
 
-// Class types
-// * Data members
-// * Member Functions
-// * Nested Types (Member Types)
-//  -To create a nested type, you simply define the type inside the class, under
-//  the appropriate access specifier
-/*
-enum class FruitType { apple, banana, cherry };
-
-class Fruit {
-
+class Simple {
 private:
-  FruitType m_type{};
-  int m_percentageEaten{0};
+  int m_id{};
 
 public:
-  Fruit(FruitType type) : m_type{type} {}
+  Simple(int id) : m_id{id} {
+    std::cout << "Constructing Simple " << m_id << '\n';
+  }
 
-  FruitType getType() { return m_type; }
-  int getPercentageEaten() { return m_percentageEaten; }
+  ~Simple() // here's our destructor
+  {
+    std::cout << "Destructing Simple " << m_id << '\n';
+  }
 
-  bool isCherry() { return m_type == FruitType::cherry; }
+  int getID() const { return m_id; }
 };
 
 int main() {
+  // Allocate a Simple
+  Simple simple1{1};
+  { Simple simple2{2}; } // simple2 dies here
 
-  Fruit apple{FruitType::apple};
-
-  if (apple.getType() == FruitType::apple)
-    std::cout << "I am an apple";
-  else
-    std::cout << "I am not an apple";
+  Simple Pimple{3};
 
   return 0;
-}
- */
+} // simple1 dies here
 
 // #################################################
-/*
-// BEST PRACTICE- Define any nested types at the top of your class type.
+//  Implicit Destructor- If a non-aggregate class type object has no
+//  user-declared destructor, the compiler will generate a destructor with an
+//  empty body. This destructor is called an implicit destructor, and it is
+//  effectively just a placeholder.
 
-// class types act as a scope region for names declared within, just as
-// namespaces do. Therefore
-// * the fully qualified name of Type is Fruit::Type, and
-// * the fully qualified name of the apple enumerator is Fruit::apple
+// If your class does not need to do any cleanup on destruction, it’s fine to
+// not define a destructor at all, and let the compiler generate an implicit
+// destructor for your class.
 
-class Fruit {
-
-  // Type is defined under the public access specifier, so that the type name
-  // and enumerators can be directly accessed by the public.
-public:
-  // FruitType has been moved inside the class, under the public access
-  // specifier We've also renamed it Type and made it an enum rather than an
-  // enum class
-
-  // Nested type names must be fully defined before they can be used, so they
-  // are usually defined first
-  enum Type { apple, banana, cherry };
-
-private:
-  Type m_type{};
-  int m_percentageEaten{0};
-
-public:
-  Fruit(Type type) : m_type{type} {}
-
-  Type getType() { return m_type; }
-  int getPercentageEaten() { return m_percentageEaten; }
-
-  // Within the members of the class, we do not need to use the fully qualified
-  // name
-  bool isCherry() {
-    return m_type == cherry;
-  } // Inside members of Fruit, we no longer need to prefix enumerators with
-    // FruitType::
-};
-
-int main() {
-  // Outside the class, we must use the fully qualified name (e.g.
-  // Fruit::apple).
-  Fruit apple{Fruit::apple};
-
-  if (apple.getType() == Fruit::apple)
-    std::cout << "I am an apple";
-  else
-    std::cout << "I am not an apple";
-
-  return 0;
-}
-
-// Since the class itself is now acting as a scope region, it’s somewhat
-// redundant to use a scoped enumerator as well.
-// * unscoped enum- access enumerators as Fruit::apple
-// * scoped enum- access enumerators as Fruit::Type::apple
- */
-// ###########################################################
-/*
-// Class types can also contain nested typedefs or type aliases:
-class Employee {
-public:
-  using IDType = int;
-
-private:
-  std::string m_name{};
-  IDType m_id{};
-  double m_wage{};
-
-public:
-  Employee(std::string_view name, IDType id, double wage)
-      : m_name{name}, m_id{id}, m_wage{wage} {}
-
-  const std::string &getName() { return m_name; }
-  IDType getId() { return m_id; } // can use unqualified name within class
-};
-
-int main() {
-  Employee john{"John", 1, 45000};
-  Employee::IDType id{
-      john.getId()}; // must use fully qualified name outside class
-
-  std::cout << john.getName() << " has id: " << id << '\n';
-
-  return 0;
-}
- */
-
-// ###########################################################
-// a nested class does not have access to the this pointer of the outer
-// (containing) class, so nested classes can not directly access the members of
-// the outer class. This is because a nested class can be instantiated
-// independently of the outer class (and in such a case, there would be no outer
-// class members to access!)
-
-// because nested classes are members of the outer class, they can access any
-// private members of the outer class that are in scope.
-
-// There is one case where nested classes are more commonly used. In the
-// standard library, most iterator classes are implemented as nested classes of
-// the container they are designed to iterate over. For example,
-// std::string::iterator is implemented as a nested class of std::string
-#include <iostream>
-#include <string>
-#include <string_view>
-
-class Employee {
-public:
-  using IDType = int;
-
-  class Printer {
-  public:
-    void print(const Employee &e) const {
-      // Printer can't access Employee's `this` pointer
-      // so we can't print m_name and m_id directly
-      // Instead, we have to pass in an Employee object to use
-      // Because Printer is a member of Employee,
-      // we can access private members e.m_name and e.m_id directly
-      std::cout << e.m_name << " has id: " << e.m_id << '\n';
-    }
-  };
-
-private:
-  std::string m_name{};
-  IDType m_id{};
-  double m_wage{};
-
-public:
-  Employee(std::string_view name, IDType id, double wage)
-      : m_name{name}, m_id{id}, m_wage{wage} {}
-
-  // removed the access functions in this example (since they aren't used)
-};
-
-int main() {
-  const Employee john{"John", 1, 45000};
-  const Employee::Printer p{}; // instantiate an object of the inner class
-  p.print(john);
-
-  return 0;
-}
+// we discussed the std::exit() function, can be used to terminate your program
+// immediately. When the program is terminated immediately, the program just
+// ends. Local variables are not destroyed first, and because of this, no
+// destructors will be called. Be wary if you’re relying on your destructors to
+// do necessary cleanup work in such a case.
