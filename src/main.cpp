@@ -1,26 +1,10 @@
-// Learncpp.com: section 13.11- Struct miscellany
-
-// Pass by Reference
+// Learncpp.com: section 13.12- Member selection with pointers and references
 
 #include <iostream>
-
-struct Foo {
-  short a{};
-  int b{};
-  double c{};
-};
-
-struct Foo1 {
-  short a{}; // will have 2 bytes of padding after a
-  int b{};
-  short c{}; // will have 2 bytes of padding after c
-};
-
-struct Foo2 {
-  int b{};
-  short a{};
-  short c{};
-};
+/*
+// BEST PRACTICE- When using a pointer to access a member, use the member
+// selection from pointer operator (->) instead of the member selection operator
+// (.).
 
 struct Employee {
   int id{};
@@ -28,45 +12,54 @@ struct Employee {
   double wage{};
 };
 
-struct Company {
-  int numberOfEmployees{};
-  Employee CEO{}; // Employee is a struct within the Company struct
+int main() {
+  Employee joe{1, 34, 65000.0};
+
+  ++joe.age;
+  joe.wage = 68000.0;
+
+  Employee *ptr{&joe};
+  // std::cout << ptr.id << '\n'; // Compile error: can't use operator. with
+  // pointers
+
+  std::cout << (*ptr).id << '\n'; // Not great but works: First dereference ptr,
+                                  // then use member selection
+  // member selection from pointer operator (->) (also sometimes called the
+  // arrow operator) that can be used to select members from a pointer to an
+  // object
+  std::cout << ptr->id
+            << '\n'; // Better: use -> to select member from pointer to object
+
+  return 0;
+}
+ */
+
+struct Point {
+  double x{};
+  double y{};
 };
 
-struct Company2 {
-  struct Employee2 // accessed via Company::Employee
-  {
-    int id{};
-    int age{};
-    double wage{};
-  };
-
-  int numberOfEmployees{};
-  Employee2 CEO{}; // Employee is a struct within the Company struct
+struct Triangle {
+  Point *a{};
+  Point *b{};
+  Point *c{};
 };
 
 int main() {
-  Company myCompany{
-      7, {1, 32, 55000.0}}; // Nested initialization list to initialize Employee
-  std::cout << myCompany.CEO.wage << '\n'; // print the CEO's wage
+  Point a{1, 2};
+  Point b{3, 7};
+  Point c{10, 2};
 
-  Company myCompany2{
-      7, {1, 32, 55000.0}}; // Nested initialization list to initialize Employe
-  std::cout << myCompany2.CEO.wage << '\n'; // print the CEO's wage
+  Triangle tr{&a, &b, &c};
+  Triangle *ptr{&tr};
 
-  // Typically, the size of a struct is the sum of the size of all its members,
-  // but not always!
-  // * we can only say that the size of a struct will be at least as large as
-  // the size of all the variables it contains. But it could be larger! For
-  // performance reasons, the compiler will sometimes add gaps into structures
-  // (this is called padding)
-  std::cout << "The size of short is " << sizeof(short) << " bytes\n";
-  std::cout << "The size of int is " << sizeof(int) << " bytes\n";
-  std::cout << "The size of double is " << sizeof(double) << " bytes\n";
-  std::cout << "The size of Foo is " << sizeof(Foo) << " bytes\n";
+  // ptr is a pointer to a Triangle, which contains members that are pointers to
+  // a Point To access member y of Point c of the Triangle pointed to by ptr,
+  // the following are equivalent:
 
-  // Foo1 is 50% larger due to the added padding/ memory allocation
-  std::cout << sizeof(Foo1) << '\n'; // prints 12
-  std::cout << sizeof(Foo2) << '\n'; // prints 8
-  return 0;
+  // access via operator.
+  std::cout << (*(*ptr).c).y << '\n'; // ugly!
+
+  // access via operator->
+  std::cout << ptr->c->y << '\n'; // much nicer
 }
