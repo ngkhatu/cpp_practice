@@ -1,62 +1,97 @@
-// Learncpp.com: section 15.4- Introduction to destructors
+// Learncpp.com: section 8.12- Halts (exiting your program early)
 
-// Destructors are designed to allow a class to do any necessary clean up before
-// an object of the class is destroyed.
+// std::exit() performs a number of cleanup functions. First, objects with
+// static storage duration are destroyed. Then some other miscellaneous file
+// cleanup is done if any files were used. Finally, control is returned back to
+// the OS, with the argument passed to std::exit() used as the status code
 
+// Although std::exit() is called implicitly after function main() returns,
+// std::exit() can also be called explicitly to halt the program before it would
+// normally terminate. When std::exit() is called this way, you will need to
+// include the cstdlib header.
 /*
-Like constructors, destructors have specific naming rules:
-
-1) The destructor must have the same name as the class, preceded by a tilde (~).
-2) The destructor can not take arguments.
-3) The destructor has no return type.
-A class can only have a single destructor.
-
-Generally you should not call a destructor explicitly (as it will be called
-automatically when the object is destroyed), since there are rarely cases where
-you’d want to clean up an object more than once.
-*/
-
+#include <cstdlib> // for std::exit()
 #include <iostream>
 
-class Simple {
-private:
-  int m_id{};
-
-public:
-  Simple(int id) : m_id{id} {
-    std::cout << "Constructing Simple " << m_id << '\n';
-  }
-
-  ~Simple() // here's our destructor
-  {
-    std::cout << "Destructing Simple " << m_id << '\n';
-  }
-
-  int getID() const { return m_id; }
-};
+void cleanup() {
+  // code here to do any kind of cleanup required
+  std::cout << "cleanup!\n";
+}
 
 int main() {
-  // Allocate a Simple
-  Simple simple1{1};
-  { Simple simple2{2}; } // simple2 dies here
+  std::cout << 1 << '\n';
+  cleanup();
 
-  Simple Pimple{3};
+  // Warning! The std::exit() function does not clean up local variables in the
+  // current function or up the call stack.
+  std::exit(0); // terminate and return status code 0 to operating system
+
+  // std::exit() can be called from any function to terminate the program at
+  // that point.
+  //  The following statements never execute
+  std::cout << 2 << '\n';
 
   return 0;
-} // simple1 dies here
+} */
 
-// #################################################
-//  Implicit Destructor- If a non-aggregate class type object has no
-//  user-declared destructor, the compiler will generate a destructor with an
-//  empty body. This destructor is called an implicit destructor, and it is
-//  effectively just a placeholder.
+// ##########################################################
+// Because std::exit() terminates the program immediately, you may want to
+// manually do some cleanup before terminating. In this context, cleanup means
+// things like closing database or network connections, deallocating any memory
+// you have allocated, writing information to a log file, etc…
 
-// If your class does not need to do any cleanup on destruction, it’s fine to
-// not define a destructor at all, and let the compiler generate an implicit
-// destructor for your class.
+// remembering to manually call a cleanup function before calling every call to
+// exit() adds burden to the programmer and is a recipe for errors.
 
-// we discussed the std::exit() function, can be used to terminate your program
-// immediately. When the program is terminated immediately, the program just
-// ends. Local variables are not destroyed first, and because of this, no
-// destructors will be called. Be wary if you’re relying on your destructors to
-// do necessary cleanup work in such a case.
+// To assist with this, C++ offers the std::atexit() function, which allows you
+// to specify a function that will automatically be called on program
+// termination via std::exit()
+/*
+#include <cstdlib> // for std::exit()
+#include <iostream>
+
+void cleanup() {
+  // code here to do any kind of cleanup required
+  std::cout << "cleanup!\n";
+}
+
+int main() {
+  // register cleanup() to be called automatically when std::exit() is called
+
+  // function being registered must take no parameters and have no return value.
+  // Finally, you can register multiple cleanup functions using std::atexit() if
+  // you want, and they will be called in reverse order of registration (the
+  // last one registered will be called first).
+  std::atexit(
+      cleanup); // note: we use cleanup rather than cleanup() since we're not
+                // making a function call to cleanup() right now
+
+  std::cout << 1 << '\n';
+
+  std::exit(0); // terminate and return status code 0 to operating system
+
+  // The following statements never execute
+  std::cout << 2 << '\n';
+
+  return 0;
+}
+ */
+// ############################################################
+
+// The std::abort() function causes your program to terminate abnormally.
+// Abnormal termination means the program had some kind of unusual runtime error
+// and the program couldn’t continue to run. For example, trying to divide by 0
+// will result in an abnormal termination. std::abort() does not do any cleanup
+
+#include <cstdlib> // for std::abort()
+#include <iostream>
+
+int main() {
+  std::cout << 1 << '\n';
+  std::abort();
+
+  // The following statements never execute
+  std::cout << 2 << '\n';
+
+  return 0;
+}
