@@ -1,97 +1,165 @@
-// Learncpp.com: section 8.12- Halts (exiting your program early)
+// Learncpp.com: section 8.13 and 8.14- Introduction to Random Number Generation
 
-// std::exit() performs a number of cleanup functions. First, objects with
-// static storage duration are destroyed. Then some other miscellaneous file
-// cleanup is done if any files were used. Finally, control is returned back to
-// the OS, with the argument passed to std::exit() used as the status code
+// The randomization capabilities in C++ are accessible via the <random> header
+// of the standard library. Within the random library, there are 6 PRNG families
+// available for use (as of C++20):
 
-// Although std::exit() is called implicitly after function main() returns,
-// std::exit() can also be called explicitly to halt the program before it would
-// normally terminate. When std::exit() is called this way, you will need to
-// include the cstdlib header.
-/*
-#include <cstdlib> // for std::exit()
+// There is zero reason to use knuth_b, default_random_engine, or rand() (which
+// is a random number generator provided for compatibility with C).
+
+// The Mersenne Twister PRNG, besides having a great name, is probably the most
+// popular PRNG across all programming languages. Although it is a bit old by
+// today’s standards, it generally produces quality results and has decent
+// performance. The random library has support for two Mersenne Twister types:
+
+// mt19937 is a Mersenne Twister that generates 32-bit unsigned integers
+// mt19937_64 is a Mersenne Twister that generates 64-bit unsigned integers
+
 #include <iostream>
+#include <random> // for std::mt19937
 
-void cleanup() {
-  // code here to do any kind of cleanup required
-  std::cout << "cleanup!\n";
-}
+/* int main() {
+  std::mt19937 mt{}; // Instantiate a 32-bit Mersenne Twister
 
-int main() {
-  std::cout << 1 << '\n';
-  cleanup();
+  // Print a bunch of random numbers
+  for (int count{1}; count <= 40; ++count) {
+    std::cout << mt() << '\t'; // generate a random number
 
-  // Warning! The std::exit() function does not clean up local variables in the
-  // current function or up the call stack.
-  std::exit(0); // terminate and return status code 0 to operating system
-
-  // std::exit() can be called from any function to terminate the program at
-  // that point.
-  //  The following statements never execute
-  std::cout << 2 << '\n';
+    // If we've printed 5 numbers, start a new row
+    if (count % 5 == 0)
+      std::cout << '\n';
+  }
 
   return 0;
 } */
-
-// ##########################################################
-// Because std::exit() terminates the program immediately, you may want to
-// manually do some cleanup before terminating. In this context, cleanup means
-// things like closing database or network connections, deallocating any memory
-// you have allocated, writing information to a log file, etc…
-
-// remembering to manually call a cleanup function before calling every call to
-// exit() adds burden to the programmer and is a recipe for errors.
-
-// To assist with this, C++ offers the std::atexit() function, which allows you
-// to specify a function that will automatically be called on program
-// termination via std::exit()
-/*
-#include <cstdlib> // for std::exit()
-#include <iostream>
-
-void cleanup() {
-  // code here to do any kind of cleanup required
-  std::cout << "cleanup!\n";
-}
-
+// ######################################
+/* // Uniform Distribution
 int main() {
-  // register cleanup() to be called automatically when std::exit() is called
+  std::mt19937 mt{};
 
-  // function being registered must take no parameters and have no return value.
-  // Finally, you can register multiple cleanup functions using std::atexit() if
-  // you want, and they will be called in reverse order of registration (the
-  // last one registered will be called first).
-  std::atexit(
-      cleanup); // note: we use cleanup rather than cleanup() since we're not
-                // making a function call to cleanup() right now
+  // Create a reusable random number generator that generates uniform numbers
+  // between 1 and 6
+  std::uniform_int_distribution die6{
+      1, 6}; // for C++14, use std::uniform_int_distribution<> die6{ 1, 6 };
 
-  std::cout << 1 << '\n';
+  // Print a bunch of random numbers
+  for (int count{1}; count <= 40; ++count) {
+    std::cout << die6(mt) << '\t'; // generate a roll of the die here
 
-  std::exit(0); // terminate and return status code 0 to operating system
-
-  // The following statements never execute
-  std::cout << 2 << '\n';
+    // If we've printed 10 numbers, start a new row
+    if (count % 10 == 0)
+      std::cout << '\n';
+  }
 
   return 0;
 }
  */
-// ############################################################
+// #########################################
+/* //  Seeding with System Clocks
+// std::chrono::high_resolution_clock is a popular choice instead of
+// std::chrono::steady_clock. std::chrono::high_resolution_clock is the clock
+// that uses the most granular unit of time, but it may use the system clock for
+// the current time, which can be changed or rolled back by users.
+// std::chrono::steady_clock may have a less granular tick time, but is the only
+// clock with a guarantee that users cannot adjust it.
 
-// The std::abort() function causes your program to terminate abnormally.
-// Abnormal termination means the program had some kind of unusual runtime error
-// and the program couldn’t continue to run. For example, trying to divide by 0
-// will result in an abnormal termination. std::abort() does not do any cleanup
-
-#include <cstdlib> // for std::abort()
+#include <chrono> // for std::chrono
 #include <iostream>
+#include <random> // for std::mt19937
 
 int main() {
-  std::cout << 1 << '\n';
-  std::abort();
+  // Seed our Mersenne Twister using steady_clock
+  // std::mt19937 mt{static_cast<std::mt19937::result_type>(
+  //     std::chrono::steady_clock::now().time_since_epoch().count())};
+  std::mt19937 mt{static_cast<std::mt19937::result_type>(
+      std::chrono::high_resolution_clock::now().time_since_epoch().count())};
 
-  // The following statements never execute
-  std::cout << 2 << '\n';
+  // Create a reusable random number generator that generates uniform numbers
+  // between 1 and 6
+  std::uniform_int_distribution die6{
+      1, 6}; // for C++14, use std::uniform_int_distribution<> die6{ 1, 6 };
+
+  // Print a bunch of random numbers
+  for (int count{1}; count <= 40; ++count) {
+    std::cout << die6(mt) << '\t'; // generate a roll of the die here
+
+    // If we've printed 10 numbers, start a new row
+    if (count % 10 == 0)
+      std::cout << '\n';
+  }
 
   return 0;
 }
+
+ */
+
+// #################################################
+/* //  Seed with a pseudo random number from the OS
+// BEST PRACTICE is to seed PRNG with std::random_device
+// BEST PRACTICE Only seed a given pseudo-random number generator once, and do
+// not reseed it.
+#include <iostream>
+#include <random> // for std::mt19937 and std::random_device
+
+int main() {
+  std::mt19937 mt{std::random_device{}()};
+
+  // Create a reusable random number generator that generates uniform numbers
+  // between 1 and 6
+  std::uniform_int_distribution die6{
+      1, 6}; // for C++14, use std::uniform_int_distribution<> die6{ 1, 6 };
+
+  // Print a bunch of random numbers
+  for (int count{1}; count <= 40; ++count) {
+    std::cout << die6(mt) << '\t'; // generate a roll of the die here
+
+    // If we've printed 10 numbers, start a new row
+    if (count % 10 == 0)
+      std::cout << '\n';
+  }
+
+  return 0;
+}
+
+ */
+// #######################################################
+
+#include <iostream>
+#include <random>
+// This is pretty straightforward so there isn’t much reason not to do this at a
+// minimum. The results from seeding a std::mt_19937 with 8 seed values instead
+// of a single value should be much better.
+
+int main() {
+  std::random_device rd{};
+  std::seed_seq ss{rd(), rd(), rd(), rd(), rd(),
+                   rd(), rd(), rd()}; // get 8 integers of random numbers from
+                                      // std::random_device for our seed
+  std::mt19937 mt{ss}; // initialize our Mersenne Twister with the std::seed_seq
+
+  // Create a reusable random number generator that generates uniform numbers
+  // between 1 and 6
+  std::uniform_int_distribution die6{
+      1, 6}; // for C++14, use std::uniform_int_distribution<> die6{ 1, 6 };
+
+  // Print a bunch of random numbers
+  for (int count{1}; count <= 40; ++count) {
+    std::cout << die6(mt) << '\t'; // generate a roll of the die here
+
+    // If we've printed 10 numbers, start a new row
+    if (count % 10 == 0)
+      std::cout << '\n';
+  }
+
+  return 0;
+}
+
+// Warming up a PRNG
+// When a PRNG is given a poor quality seed (or underseeded), the initial
+// results of the PRNG may not be high quality. For this reason, some PRNGs
+// benefit from being “warmed up”, which is a technique where the first N
+// results generated from the PRNG are discarded. This allows the internal state
+// of the PRNG to be mixed up such that the subsequent results should be of
+// higher quality. Typically a few hundred to a few thousand initial results are
+// discarded. The longer the period of the PRNG, the more initial results should
+// be discarded.
