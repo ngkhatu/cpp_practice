@@ -1,100 +1,116 @@
-// Learncpp.com: section 5.10- Introduction to std::string_view (part 1)
+// Learncpp.com: section 5.11- std::string_view (part 2)
+
+// introduction to owners and viewers
+
+// std::string is an owner
+
+// You might be wondering why std::string makes an expensive copy of its
+// initializer. When an object is instantiated, memory is allocated for that
+// object to store whatever data it needs to use throughout its lifetime. This
+// memory is reserved for the object, and guaranteed to exist for as long as the
+// object does. It is a safe space. std::string (and most other objects) copy
+// the initialization value they are given into this memory so that they can
+// have their own independent value to access and manipulate later. Once the
+// initialization value has been copied, the object is no longer reliant on the
+// initializer in any way.
+
+// std::string_view is a viewer
+
+// std::string_view takes a different approach to initialization. Instead of
+// making an expensive copy of the initialization string, std::string_view
+// creates an inexpensive view of the initialization string. The
+// std::string_view can then be used whenever access to the string is required.
+
+//* It is important to note that a std::string_view remains dependent on the
+// initializer through its lifetime. If the string being viewed is modified or
+// destroyed while the view is still being used, unexpected or undefined
+// behavior will result.
+// - A std::string_view that is viewing a string that has been destroyed is
+// sometimes called a dangling view.
 
 #include <iostream>
 #include <string>
 #include <string_view>
 
-// BEST PRACTICE- Prefer std::string_view over std::string when you need a
-// read-only string, especially for function parameters.
+/* // Invalidated objects can often be revalidated (made valid again) by setting
+// them back to a known good state. For an invalidated std::string_view, we can
+// do this by assigning the invalidated std::string_view object a valid string
+// to view
 
-void printString(std::string str) // str makes a copy of its initializer
-{
-  std::cout << str << '\n';
-}
+// Because local variables are destroyed at the end of the function, returning a
+// std::string_view that is viewing a local variable will result in the returned
+// std::string_view being invalid, and further use of that std::string_view will
+// result in undefined behavior
+std::string_view getBoolName(bool b) {
+  std::string t{"true"};  // local variable
+  std::string f{"false"}; // local variable
 
-// str provides read-only access to whatever argument is passed in
-void printSV(std::string_view str) // now a std::string_view
-{
-  std::cout << str << '\n';
-}
+  if (b)
+    return t; // return a std::string_view viewing t
+
+  return f; // return a std::string_view viewing f
+} // t and f are destroyed at the end of the function
 
 int main() {
-  std::string s{"Hello, world!"}; // s makes a copy of its initializer
+  std::string s{"Hello, world!"};
+  std::string_view sv{s}; // sv is now viewing s
 
-  printString(s);
-  printSV(s);
+  s = "Hello, universe!"; // modifies s, which invalidates sv (s is still valid)
+  std::cout << sv << '\n'; // undefined behavior
 
-  // One of the neat things about a std::string_view is how flexible it is. A
-  // std::string_view object can be initialized with a C-style string, a
-  // std::string, or another std::string_view:
+  sv = s;                  // revalidate sv: sv is now viewing s again
+  std::cout << sv << '\n'; // prints "Hello, universe!"
 
-  std::string_view s1{
-      "Hello, world!"}; // initialize with C-style string literal
-  std::cout << s1 << '\n';
+  std::cout << getBoolName(true) << ' ' << getBoolName(false)
+            << '\n'; // undefined behavior
 
-  std::string_view s2{s}; // initialize with std::string
-  std::cout << s2 << '\n';
+  return 0;
+}
+ */
+std::string_view firstAlphabetical(std::string_view s1, std::string_view s2) {
+  return s1 < s2 ? s1 : s2; // uses operator?: (the conditional operator)
+}
 
-  std::string_view s3{s2}; // initialize with std::string_view
-  std::cout << s3 << '\n';
+std::string_view getBoolName(bool b) {
+  if (b)
+    return "true"; // return a std::string_view viewing "true"
 
-  // Both a C-style string and a std::string will implicitly convert to a
-  // std::string_view. Therefore, a std::string_view parameter will accept
-  // arguments of type C-style string, a std::string, or std::string_view:
+  return "false"; // return a std::string_view viewing "false"
+} // "true" and "false" are not destroyed at the end of the function
 
-  printSV("Hello, world!"); // call with C-style string literal
+int main() {
 
-  std::string s4{"Hello, world!"};
-  printSV(s4); // call with std::string
+  // There are two main cases where a std::string_view can be returned safely.
+  // First, because C-style string literals exist for the entire program, it’s
+  // fine (and useful) to return C-style string literals from a function that
+  // has a return type of std::string_view.
+  std::cout << getBoolName(true) << ' ' << getBoolName(false) << '\n'; // ok
 
-  std::string_view s5{s4};
-  printSV(s5); // call with std::string_view
+  std::string a{"World"};
+  std::string b{"Hello"};
 
-  // Because std::string makes a copy of its initializer (which is expensive),
-  // C++ won’t allow implicit conversion of a std::string_view to a std::string.
-  // This is to prevent accidentally passing a std::string_view argument to a
-  // std::string parameter, and inadvertently making an expensive copy where
-  // such a copy may not be required.
+  // Second, it is generally okay to return a function parameter of type
+  // std::string_view:
+  std::cout << firstAlphabetical(a, b) << '\n'; // prints "Hello"
+  // one important subtlety here. If the argument is a temporary object (that
+  // will be destroyed at the end of the full expression containing the function
+  // call), the std::string_view return value must be used in the same
+  // expression. After that point, the temporary is destroyed and the
+  // std::string_view is left dangling
 
-  // However, if this is desired, we have two options:
-  //* Explicitly create a std::string with a std::string_view initializer (which
-  // is allowed, since this will rarely be done unintentionally)
-  //* Convert an existing std::string_view to a std::string using static_cast
+  std::string_view str{"Peach"};
+  std::cout << str << '\n';
 
-  std::string_view sv{"Hello, world!"};
+  // Remove 1 character from the left side of the view
+  str.remove_prefix(1);
+  std::cout << str << '\n';
 
-  // printString(sv);   // compile error: won't implicitly convert
-  // std::string_view to a std::string
+  // Remove 2 characters from the right side of the view
+  str.remove_suffix(2);
+  std::cout << str << '\n';
 
-  std::string s6{
-      sv}; // okay: we can create std::string using std::string_view initializer
-  printString(s6); // and call the function with the std::string
+  str = "Peach"; // reset the view
+  std::cout << str << '\n';
 
-  printString(static_cast<std::string>(
-      sv)); // okay: we can explicitly cast a std::string_view to a std::string
-
-  // Assigning a new string to a std::string_view causes the std::string_view to
-  // view the new string. It does not modify the prior string being viewed in
-  // any way
-  std::string name{"Alex"};
-  std::string_view strv{name}; // sv is now viewing name
-  std::cout << strv << '\n';   // prints Alex
-
-  strv = "John";             // sv is now viewing "John" (does not change name)
-  std::cout << strv << '\n'; // prints John
-
-  std::cout << name << '\n'; // prints Alex
-
-  using namespace std::string_literals;      // access the s suffix
-  using namespace std::string_view_literals; // access the sv suffix
-  std::cout << "foo\n";   // no suffix is a C-style string literal
-  std::cout << "goo\n"s;  // s suffix is a std::string literal
-  std::cout << "moo\n"sv; // sv suffix is a std::string_view literal
-
-  // Unlike std::string, std::string_view has full support for constexpr:
-  constexpr std::string_view s7{
-      "Hello, world!"}; // s is a string symbolic constant
-  std::cout << s7
-            << '\n'; // s will be replaced with "Hello, world!" at compile-time
   return 0;
 }
