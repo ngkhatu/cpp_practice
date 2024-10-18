@@ -1,102 +1,193 @@
-// Learncpp.com: section 10.2- Floating-point and integral promotion
+// Learncpp.com: section 10.3- Numeric conversions
 
-// Because C++ is designed to be portable and performant across a wide range of
-// architectures, the language designers did not want to assume a given CPU
-// would be able to efficiently manipulate values that were narrower than the
-// natural data size for that CPU.
+/* // There are five basic types of numeric conversions.
+// .................................................................
+// 1) Converting an integral type to any other integral type (excluding
+// integral promotions):
+short s = 3;        // convert int to short
+long l = 3;         // convert int to long
+char ch = s;        // convert short to char
+unsigned int u = 3; // convert int to unsigned int
 
-// To help address this challenge, C++ defines a category of type conversions
-// informally called the numeric promotions. A numeric promotion is the type
-// conversion of certain narrower numeric types (such as a char) to certain
-// wider numeric types (typically int or double) that can be processed
-// efficiently.
+// 2) Converting a floating point type to any other floating point type
+// (excluding floating point promotions):
+float f = 3.0;        // convert double to float
+long double ld = 3.0; // convert double to long double
 
-// All numeric promotions are value-preserving. A value-preserving conversion
-// (also called a safe conversion) is one where every possible source value can
-// be converted into an equal value of the destination type.
+// 3) Converting a floating point type to any integral type:
+int i = 3.5; // convert double to int
 
-// Because promotions are safe, the compiler will freely use numeric promotion
-// as needed, and will not issue a warning when doing so.
+// 4) Converting an integral type to any floating point type:
+double d = 3; // convert int to double
 
-// ----------------------------------------------------------
-// Reduce Redundancy
-// we can write functions that have int and/or double parameters (such as the
-// printInt() function). That same code can then be called with arguments
-// of types that can be numerically promoted to match the types of the function
-// parameters
+// 5) Converting an integral type or a floating point type to a bool:
+bool b1 = 3;   // convert int to bool
+bool b2 = 3.0; // convert double to bool
 
-/* #include <iostream>
+// NOTE: brace initialization strictly disallows some types of numeric
+conversions, we use copy initialization
+ */
 
-void printInt(int x) { std::cout << x << '\n'; } */
+// #######################################################################################
+// An unsafe conversion is one where at least one value of the source type
+// cannot be converted into an equal value of the destination type.
 
-// ----------------------------------------------------------
-// Categories:
-// numeric promotion rules are divided into two subcategories: integral
-// promotions and floating point promotions. Only the conversions listed in
-// these categories are considered to be numeric promotions.
-// ----------------------------------------------------------
-// Floating Point Promotions
-// Using the floating point promotion rules, a value of type float can be
-// converted to a value of type double.
+// Numeric conversions fall into three general safety categories:
+//..................................................................
 
-// This means we can write a function that takes a double and then call it with
-// either a double or a float value:
+// 1) Value-preserving conversions: are safe numeric conversions where the
+// destination type can exactly represent all possible values in the source
+// type.
 
-/* #include <iostream>
+/* int main() {
+  int n{5};
+  long l = n; // okay, produces long value 5
 
-void printDouble(double d) { std::cout << d << '\n'; }
+  short s{5};
+  double d = s; // okay, produces double value 5.0
 
-int main() {
-  printDouble(5.0);  // no conversion necessary
-  printDouble(4.0f); // numeric promotion of float to double
   return 0;
 } */
-// ----------------------------------------------------------
-// Integral Promotions
-/*
-the following conversions can be made:
-....................................................
-* signed char or signed short can be converted to int.
-* unsigned char, char8_t, and unsigned short can be converted to int if int can
-hold the entire range of the type, or unsigned int otherwise.
-* If char is signed by default, it follows the signed char conversion rules
-above. If it is unsigned by default, it follows the unsigned char conversion
-rules above.
-* bool can be converted to int, with false becoming 0 and true becoming 1.
-Assuming an 8 bit byte and an int size of 4 bytes or larger (which is typical
-these days), the above basically means that bool, char, signed char, unsigned
-char, signed short, and unsigned short all get promoted to int.
-*/
-// *  while integral promotion is value-preserving, it does not necessarily
-// preserve the signedness (signed/unsigned) of the type.
-#include <iostream>
+// Compilers will typically not issue warnings for implicit value-preserving
+// conversions.
 
-void printInt(int x) { std::cout << x << '\n'; }
+// A value converted using a value-preserving conversion can always be converted
+// back to the source type, resulting in a value that is equivalent to the
+// original value:
+/* #include <iostream>
 
 int main() {
-  printInt(2);
+  int n =
+      static_cast<int>(static_cast<long>(3)); // convert int 3 to long and back
+  std::cout << n << '\n';                     // prints 3
 
-  short s{3};  // there is no short literal suffix, so we'll use a variable for
-               // this one
-  printInt(s); // numeric promotion of short to int
+  char c = static_cast<char>(
+      static_cast<double>('c')); // convert 'c' to double and back
+  std::cout << c << '\n';        // prints 'c'
 
-  printInt('a');  // numeric promotion of char to int
-  printInt(true); // numeric promotion of bool to int
+  return 0;
+} */
+
+// 2) Reinterpretive conversions: are unsafe numeric conversions where the
+// converted value may be different than the source value, but no data is lost.
+// Signed/unsigned conversions fall into this category.
+// For example, when converting a signed int to an unsigned int:
+
+/* int main() {
+  int n1{5};
+  unsigned int u1{
+      n1}; // okay: will be converted to unsigned int 5 (value preserved)
+
+  int n2{-5};
+  unsigned int u2{
+      n2}; // bad: will result in large integer outside range of signed int
+
+  return 0;
+} */
+// Such value changes are typically undesirable, and will often cause the
+// program to exhibit unexpected or implementation-defined behavior.
+
+// Values converted using a reinterpretive conversion can be converted back to
+// the source type, resulting in a value equivalent to the original value (even
+// if the initial conversion produced a value out of range of the source type).
+// As such, reinterpretive conversions do not lose data during the conversion
+// process.
+
+/* #include <iostream>
+
+int main() {
+  int u = static_cast<int>(
+      static_cast<unsigned int>(-5)); // convert '-5' to unsigned and back
+  std::cout << u << '\n';             // prints -5
 
   return 0;
 }
-// ----------------------------------------------------------
-// Not all widening converstions are numberic promotions
-// widening type conversions (such as char to short, or int to long) are not
-// considered to be numeric promotions in C++ (they are numeric conversions,
-// which we’ll cover shortly in lesson 10.3 -- Numeric conversions). This is
-// because such conversions do not assist in the goal of converting smaller
-// types to larger types that can be processed more efficiently.
+ */
 
-// ----------------------------------------------------------
-// ----------------------------------------------------------
-// ----------------------------------------------------------
-// ----------------------------------------------------------
-// ----------------------------------------------------------
-// ----------------------------------------------------------
-// ----------------------------------------------------------
+// 3) Lossy conversions: are unsafe numeric conversions where data may be lost
+// during the conversion.
+
+// For example, double to int is a conversion that may result in data loss:
+/* int i = 3.0; // okay: will be converted to int value 3 (value preserved)
+int j = 3.5; // data lost: will be converted to int value 3 (fractional value
+             // 0.5 lost) */
+// Conversion from double to float can also result in data loss:
+/* float f = 1.2; // okay: will be converted to float value 1.2 (value
+preserved)
+float g = 1.23456789; // data lost: will be converted to float 1.23457
+                      // (precision lost)
+*/
+
+// Converting a value that has lost data back to the source type will result in
+// a value that is different than the original value:
+
+/* #include <iostream>
+
+int main() {
+  double d{static_cast<double>(
+      static_cast<int>(3.5))}; // convert double 3.5 to int and back
+  std::cout << d << '\n';      // prints 3
+
+  double d2{static_cast<double>(static_cast<float>(
+      1.23456789))};       // convert double 1.23456789 to float and back
+  std::cout << d2 << '\n'; // prints 1.23457
+
+  return 0;
+} */
+// For example, if double value 3.5 is converted to int value 3, the fractional
+// component 0.5 is lost. When 3 is converted back to a double, the result
+// is 3.0, not 3.5.
+
+// Compilers will generally issue a warning (or in some cases, an error) when an
+// implicit lossy conversion would be performed at runtime.
+
+// Unsafe conversions should be avoided as much as possible. However, this is
+// not always possible. When unsafe conversions are used, it is most often when:
+// * We can constrain the values to be converted to just those that can be
+// converted to equal values. For example, an int can be safely converted to an
+// unsigned int when we can guarantee that the int is non-negative.
+// * We don’t mind that some data is lost because it is not relevant. For
+// example, converting an int to a bool results in the loss of data, but we’re
+// typically okay with this because we’re just checking if the int has value 0
+// or not.
+// ##########################################################
+// * In all cases, converting a value into a type whose range doesn’t support
+// that value will lead to results that are probably unexpected. For example:
+/* #include <iostream>
+int main() {
+  int i{30000};
+  char c = i; // chars have range -128 to 127
+
+  std::cout << static_cast<int>(c) << '\n';
+
+  return 0;
+} */
+// In this example, we’ve assigned a large integer to a variable with type char
+// (that has range -128 to 127). This causes the char to overflow, and produces
+// an unexpected result:
+
+// * Remember that overflow is well-defined for unsigned values and produces
+// undefined behavior for signed values.
+// * Converting from a larger integral or floating point type to a smaller type
+// from the same family will generally work so long as the value fits in the
+// range of the smaller type. For example:
+/* #include <iostream>
+int main() {
+  int i{10};
+  float f = i;
+  std::cout << f << '\n';
+} */
+
+// * Converting from a floating point to an integer works as long as the value
+// fits within the range of the integer, but any fractional values are lost. For
+// example:
+#include <iostream>
+int main() {
+  int i = 3.5;
+  std::cout << i << '\n';
+  // In this example, the fractional value (.5) is lost, leaving the following
+  // result:
+}
+// While the numeric conversion rules might seem scary, in reality the compiler
+// will generally warn you if you try to do something dangerous (excluding some
+// signed/unsigned conversions).
