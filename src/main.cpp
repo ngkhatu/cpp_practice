@@ -1,139 +1,173 @@
-// Learncpp.com: section 10.5- Arithmetic Conversion
+// Learncpp.com: section 10.6- Explicit type conversion (casting) and
+// static_cast
+
+/* double d = 10 / 4; // does integer division, initializes d with value 2.0
+double d =
+    10.0 / 4.0; // does floating point division, initializes d with value 2.5
+
+int x{10};
+int y{4};
+double d = x / y; // does integer division, initializes d with value 2.0
+ */
 
 /*
-But what happens when the operands of a binary operator are of different types?
-
-??? y { 2 + 3.5 };
-In this case, operator+ is being given one operand of type int and another of
-type double. Should the result of the operator be returned as an int, a double,
-or possibly something else altogether?
-
-In C++, certain operators require that their operands be of the same type. If
-one of these operators is invoked with operands of different types, one or both
-of the operands will be implicitly converted to matching types using a set of
-rules called the usual arithmetic conversions. The matching type produced as a
-result of the usual arithmetic conversion rules is called the common type of the
-operands.
-
-The following operators require their operands to be of the same type:
-------------------------------------------------------------------------
-The binary arithmetic operators: +, -, *, /, %
-The binary relational operators: <, >, <=, >=, ==, !=
-The binary bitwise arithmetic operators: &, ^, |
-The conditional operator ?: (excluding the condition, which is expected to be of
-type bool)
-
-
-The usual arithmetic conversion rules are somewhat complex, so we’ll simplify a
-bit. The compiler has a ranked list of types that looks something like this:
-------------------------------------------------------------------------
-long double (highest rank)
-double
-float
-long long
-long
-int (lowest rank)
-The following rules are applied to find a matching type:
-
-If one operand is an integral type and the other a floating point type, the
-integral operand is converted to the type of the floating point operand (no
-integral promotion takes place).
-
-Otherwise, any integral operands are numerically promoted (see 10.2 --
-Floating-point and integral promotion).
-
-If one operand is signed and the other unsigned, special rules apply (see below)
-Otherwise, the operand with lower rank is converted to the type of the operand
-with higher rank.
-
+C++ comes with a number of different type casting operators (more commonly
+called casts) that can be used by the programmer to have the compiler perform
+type conversion. Because casts are explicit requests by the programmer, this
+form of type conversion is often called an explicit type conversion
 */
+//---------------------------------------------------------------------------
+// C++ supports 5 different types of casts:
+// * C-style casts
+// * static casts
+// * const casts (should generally be avoided because they are only useful in
+//                  rare cases and can be harmful if used incorrectly)
+// * dynamic casts
+// * reinterpret casts (should generally be avoided because they are only useful
+// in rare cases and can be harmful if used incorrectly)
+// The latter four are sometimes referred to as named casts.
+
+// - Each cast works the same way. As input, the cast takes an expression whose
+// value will be converted, and a target type. As output, the cast returns a
+// temporary object of the target type that contains the converted value.
+// - The difference between the casts is in what kind of conversions they are
+// allowed to perform.
+
+// #########################################################################
+// C-style Casts
+
+// In standard C programming, casts are done via operator(), with the name of
+// the type to convert to placed inside the parentheses, and the value to
+// convert to the right. You may still see these used in code that has been
+// converted from C.
+
+/* #include <iostream>
+
+int main() {
+  int x{10};
+  int y{4};
+
+  double d{(double)x /
+           y}; // convert x to a double so we get floating point division
+  std::cout << d << '\n'; // prints 2.5
+
+  // C++ will also let you use a C-style cast with a more function-call like
+  // syntax:
+  double e{double(x) /
+           y}; // convert x to a double so we get floating point division
+  std::cout << e << '\n'; // prints 2.5
+
+  return 0;
+}
+ */
+// Although a C-style cast appears to be a single cast, it can actually perform
+// a variety of different conversions depending on context. This can include a
+// static cast, a const cast or a reinterpret cast (the latter two of which we
+// mentioned above you should avoid). As a result, C-style casts are at risk for
+// being inadvertently misused and not producing the expected behavior,
+// something which is easily avoidable by using the C++ casts instead.
+
+// Also, because C-style casts are just a type name, parenthesis, and variable
+// or value, they are both difficult to identify (making your code harder to
+// read) and even more difficult to search for.
+
+// BEST PRACTICE- Avoid using C-style casts.
+
 /*
-#include <iostream>
-#include <typeinfo> // for typeid()
+For advanced readers
+A C-style cast tries to perform the following C++ style casts, in order:
 
-int main() {
-  int i{2};
-  std::cout << typeid(i).name() << '\n'; // show us the name of the type for i
+const_cast
+static_cast
+static_cast, followed by const_cast
+reinterpret_cast
+reinterpret_cast, followed by const_cast
 
-  double d{3.5};
-  std::cout << typeid(d).name() << '\n'; // show us the name of the type for d
-
-  std::cout << typeid(i + d).name() << ' ' << i + d
-            << '\n'; // show us the type of i + d
-
-  return 0;
-
-  // Note that your compiler may display something slightly different, as the
-  // names output by typeid.name() are implementation-specific.
-  // int
-  // double
-  // double 5.5
-}
- */
-
-//------------------------------------------------------------------
-/* // Two values of type short
-#include <iostream>
-#include <typeinfo> // for typeid()
-
-int main() {
-  short a{4};
-  short b{5};
-  std::cout << typeid(a + b).name() << ' ' << a + b
-            << '\n'; // show us the type of a + b
-
-  return 0;
-  // Because neither operand appears on the priority list, both operands undergo
-  // integral promotion to type int. The result of adding two ints is an int, as
-  // you would expect:
-  // int 9
-}
- */
-//------------------------------------------------------------------
-
-/* // This prioritization hierarchy and conversion rules can cause some
-problematic
-// issues when mixing signed and unsigned values
-
-#include <iostream>
-#include <typeinfo> // for typeid()
-
-int main() {
-  std::cout << typeid(5u - 10).name() << ' ' << 5u - 10
-            << '\n'; // 5u means treat 5 as an unsigned integer
-
-  return 0;
-}
-// Result is (j) unsigned int 4294967291
-// Due to the conversion rules, the int operand is converted to an unsigned int.
-// And since the value -5 is out of range of an unsigned int, we get a result we
-// don’t expect.
- */
-//------------------------------------------------------------------
-
-// Another counterintuitive result
-#include <iostream>
-
-int main() {
-  std::cout << std::boolalpha << (-3 < 5u) << '\n';
-
-  return 0;
-}
-// While it’s clear to us that 5 is greater than -3, when this expression
-// evaluates, -3 is converted to a large unsigned int that is larger than 5.
-// Thus, the above prints false rather than the expected result of true.
-
-// This is one of the primary reasons to avoid unsigned integers -- when you mix
-// them with signed integers in arithmetic expressions, you’re at risk for
-// unexpected results. And the compiler probably won’t even issue a warning.
+* There is one thing you can do with a C-style cast that you can’t do with C++
+casts: C-style casts can convert a derived object to a base class that is
+inaccessible (e.g. because it was privately inherited)
+*/
 
 // ##########################################################################
+// static_cast should be used to cast most values
 
-// std::common_type and std::common_type_t
-//.........................................
-// std::common_type and the useful type alias std::common_type_t (both defined
-// in the <type_traits> header) can be used for just this purpose.
+// By far the most used cast in C++ is the static cast operator, which is
+// accessed via the static_cast keyword. static_cast is used when we want to
+// explicitly convert a value of one type into a value of another type.
 
-// For example, std::common_type_t<int, double> returns the common type of int
-// and double, and std::common_type_t<unsigned int, long> returns the common
-// type of unsigned int and long.
+/* #include <iostream>
+
+int main() {
+  char c{'a'};
+  std::cout << static_cast<int>(c) << '\n'; // prints 97 rather than a
+
+  return 0;
+}
+ */
+// To perform a static cast, we start with the static_cast keyword, and then
+// place the type to convert to inside angled brackets. Then inside parenthesis,
+// we place the expression whose value will be converted.
+/*
+#include <iostream>
+
+int main() {
+  int x{10};
+  int y{4};
+
+  // static cast x to a double so we get floating point division
+  double d{static_cast<double>(x) / y};
+  std::cout << d << '\n'; // prints 2.5
+
+  return 0;
+} */
+// There are two important properties of static_cast.
+// * First, static_cast provides compile-time type checking. If we try to
+// convert a value to a type and the compiler doesn’t know how to perform that
+// conversion, we will get a compilation error.
+// a C-style string literal can't be converted to an int, so the following is an
+// invalid conversion
+// int x{static_cast<int>("Hello")}; // invalid: will produce compilation error
+// * Second, static_cast is (intentionally) less powerful than a C-style cast,
+// as it will prevent certain kinds of dangerous conversions (such as those that
+// require reinterpretation or discarding const).
+
+// BEST PRACTICE- Favor static_cast when you need to convert a value from one
+// type to another type.
+
+// ########################################################################
+// Using static_cast to make narrowing conversions explicit
+
+// Compilers will often issue warnings when a potentially unsafe (narrowing)
+// implicit type conversion is performed. For example, consider the following
+// snippet:
+
+int i{48};
+char ch = i; // implicit narrowing conversion
+// Casting an int (2 or 4 bytes) to a char (1 byte) is potentially unsafe (as
+// the compiler can’t tell whether the integer value will overflow the range of
+// the char or not), and so the compiler will typically print a warning. If we
+// used list initialization, the compiler would yield an error.
+
+// To get around this, we can use a static cast to explicitly convert our
+// integer to a char:
+int i{48};
+
+// explicit conversion from int to char, so that a char is assigned to variable
+// ch
+char ch{static_cast<char>(i)};
+
+// When we do this, we’re explicitly telling the compiler that this conversion
+// is intended, and we accept responsibility for the consequences (e.g.
+// overflowing the range of a char if that happens). Since the output of this
+// static cast is of type char, the initialization of variable ch doesn’t
+// generate any type mismatches, and hence no warnings or errors.
+
+// Here’s another example where the compiler will typically complain that
+// converting a double to an int may result in loss of data:
+int i{100};
+i = i / 2.5;
+
+// To tell the compiler that we explicitly mean to do this:
+
+int i{100};
+i = static_cast<int>(i / 2.5);
