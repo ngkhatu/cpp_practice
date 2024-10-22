@@ -1,37 +1,73 @@
-// Section 15.5- Class templates with Member functions
+/* #include <iostream>
 
-// Convert from struct to a class
-#include <ios> // for std::boolalpha
-#include <iostream>
-
-template <typename T> class Pair {
+class Something {
 private:
-  T m_first{};
-  T m_second{};
+  static int s_value; // declares the static member variable
 
 public:
-  // When we define a member function inside the class definition,
-  // the template parameter declaration belonging to the class applies
-  Pair(const T &first, const T &second) : m_first{first}, m_second{second} {}
-
-  bool isEqual(const Pair<T> &pair);
+  void static print_val() { std::cout << Something::s_value << std::endl; }
 };
 
-// When we define a member function outside the class definition,
-// we need to resupply a template parameter declaration
-// - Also, when we define a member function outside of the class, we need to
-// qualify the member function name with the fully templated name of the class
-// template (Pair<T>::isEqual, not Pair::isEqual).
-template <typename T> bool Pair<T>::isEqual(const Pair<T> &pair) {
-  return m_first == pair.m_first && m_second == pair.m_second;
-}
+int Something::s_value{
+    4}; // defines the static member variable (we'll discuss this section below)
 
 int main() {
-  Pair p1{5, 6}; // uses CTAD to infer type Pair<int>
-  std::cout << std::boolalpha << "isEqual(5, 6): " << p1.isEqual(Pair{5, 6})
-            << '\n';
-  std::cout << std::boolalpha << "isEqual(5, 7): " << p1.isEqual(Pair{5, 7})
-            << '\n';
+
+  Something::print_val();
+
+  return 0;
+}
+ */
+
+// #########################
+/*
+#include <iostream>
+
+class Something
+{
+private:
+    static inline int s_idGenerator { 1 };
+    int m_id {};
+
+public:
+    // grab the next value from the id generator
+    Something() : m_id { s_idGenerator++ }
+    {
+    }
+
+    int getID() const { return m_id; }
+};
+
+int main()
+{
+    Something first{};
+    Something second{};
+    Something third{};
+
+    std::cout << first.getID() << '\n';
+    std::cout << second.getID() << '\n';
+    std::cout << third.getID() << '\n';
+    return 0;
+} */
+
+// ###############################################
+
+#include <utility> // for std::pair<T, U>
+
+class Foo {
+private:
+  auto m_x{5};           // auto not allowed for non-static members
+  std::pair m_v{1, 2.3}; // CTAD not allowed for non-static members
+
+  static inline auto s_x{5};           // auto allowed for static members
+  static inline std::pair s_v{1, 2.3}; // CTAD allowed for static members
+
+public:
+  Foo() {};
+};
+
+int main() {
+  Foo foo{};
 
   return 0;
 }
