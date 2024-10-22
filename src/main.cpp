@@ -1,42 +1,48 @@
-// Learncpp.com: section 11.4- Deleting functions
-/*
+// Learncpp.com: section 11.7- Function Template instantiation
+
 #include <iostream>
 
-void printInt(int x) { std::cout << x << '\n'; }
+// a declaration for our function template (we don't need the definition any
+// more)
+template <typename T> T max(T x, T y);
 
-void printInt(char) = delete; // calls to this function will halt compilation
-void printInt(bool) = delete; // calls to this function will halt compilation
-
-int main() {
-  printInt(97); // okay
-
-  // printInt('a');  // compile error: function deleted
-  // printInt(true); // compile error: function deleted
-
-  // printInt(5.0); // compile error: ambiguous match
-
-  return 0;
+template <>
+int max<int>(int x, int y) // the generated function max<int>(int, int)
+{
+  return (x < y) ? y : x;
 }
- */
 
-// #################################################
+template <>
+double
+max<double>(double x,
+            double y) // the generated function max<double>(double, double)
+{
+  return (x < y) ? y : x;
+}
 
-// Deleting all non-matching overloads
-//.......................................
-
-#include <iostream>
-
-// This function will take precedence for arguments of type int
-void printInt(int x) { std::cout << x << '\n'; }
-
-// This function template will take precedence for arguments of other types
-// Since this function template is deleted, calls to it will halt compilation
-template <typename T> void printInt(T x) = delete;
+// Here's a function template with a static local variable that is modified
+template <typename T> void printIDAndValue(T value) {
+  static int id{0};
+  std::cout << ++id << ") " << value << '\n';
+}
 
 int main() {
-  printInt(97); // okay
-  // printInt('a');  // compile error
-  // printInt(true); // compile error
+  std::cout << max<int>(1, 2)
+            << '\n'; // instantiates and calls function max<int>(int, int)
+  std::cout << max<int>(4, 3)
+            << '\n'; // calls already instantiated function max<int>(int, int)
+  std::cout
+      << max<double>(1, 2)
+      << '\n'; // instantiates and calls function max<double>(double, double)
+  std::cout << max<int>(1, 2) << '\n'; // specifying we want to call max<int>
+  std::cout << max<>(1, 2) << '\n';
+  std::cout << max(1, 2) << '\n';
+
+  printIDAndValue(12);
+  printIDAndValue(13);
+
+  // static ID value is reinstantiated for double types
+  printIDAndValue(14.5);
 
   return 0;
 }
