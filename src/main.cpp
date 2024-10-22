@@ -1,48 +1,52 @@
-// Learncpp.com: section 11.7- Function Template instantiation
-
+// Learncpp.com: section 11.8- Function templates with multiple template types
+/*
 #include <iostream>
 
-// a declaration for our function template (we don't need the definition any
-// more)
-template <typename T> T max(T x, T y);
+// template <typename T, typename U> auto max(T x, U y) { return (x < y) ? y :
+// x; }
 
-template <>
-int max<int>(int x, int y) // the generated function max<int>(int, int)
-{
-  return (x < y) ? y : x;
+auto max(auto x, auto y) { return (x < y) ? y : x; }
+// shorthand for
+// template <typename T, typename U>
+// auto max(T x, U y)
+// {
+//     return (x < y) ? y : x;
+// }
+
+
+int main() {
+  std::cout << max(2, 3.5) << '\n';
+
+  return 0;
 }
 
-template <>
-double
-max<double>(double x,
-            double y) // the generated function max<double>(double, double)
-{
-  return (x < y) ? y : x;
-}
+// BEST PRACTICE- Feel free to use abbreviated function templates with a single
+// auto parameter, or where each auto parameter should be an independent type
+// (and your language standard is set to C++20 or newer).
+ */
+// #####################################################################
 
-// Here's a function template with a static local variable that is modified
-template <typename T> void printIDAndValue(T value) {
-  static int id{0};
-  std::cout << ++id << ") " << value << '\n';
+// Overloaded Function Templates
+#include <iostream>
+
+// Add two values with matching types
+template <typename T> auto add(T x, T y) { return x + y; }
+
+// Add two values with non-matching types
+// As of C++20 we could also use auto add(auto x, auto y)
+template <typename T, typename U> auto add(T x, U y) { return x + y; }
+
+// Add three values with any type
+// As of C++20 we could also use auto add(auto x, auto y, auto z)
+template <typename T, typename U, typename V> auto add(T x, U y, V z) {
+  return x + y + z;
 }
 
 int main() {
-  std::cout << max<int>(1, 2)
-            << '\n'; // instantiates and calls function max<int>(int, int)
-  std::cout << max<int>(4, 3)
-            << '\n'; // calls already instantiated function max<int>(int, int)
-  std::cout
-      << max<double>(1, 2)
-      << '\n'; // instantiates and calls function max<double>(double, double)
-  std::cout << max<int>(1, 2) << '\n'; // specifying we want to call max<int>
-  std::cout << max<>(1, 2) << '\n';
-  std::cout << max(1, 2) << '\n';
-
-  printIDAndValue(12);
-  printIDAndValue(13);
-
-  // static ID value is reinstantiated for double types
-  printIDAndValue(14.5);
+  std::cout << add(1.2, 3.4) << '\n'; // instantiates and calls add<double>()
+  std::cout << add(5.6, 7) << '\n'; // instantiates and calls add<double, int>()
+  std::cout << add(8, 9, 10)
+            << '\n'; // instantiates and calls add<int, int, int>()
 
   return 0;
 }
