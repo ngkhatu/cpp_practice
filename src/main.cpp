@@ -1,73 +1,35 @@
-/* #include <iostream>
+// Learncpp.com: 15.7- Static Member Functions
 
-class Something {
-private:
-  static int s_value; // declares the static member variable
-
-public:
-  void static print_val() { std::cout << Something::s_value << std::endl; }
-};
-
-int Something::s_value{
-    4}; // defines the static member variable (we'll discuss this section below)
-
-int main() {
-
-  Something::print_val();
-
-  return 0;
-}
- */
-
-// #########################
-/*
 #include <iostream>
 
-class Something
-{
-private:
-    static inline int s_idGenerator { 1 };
-    int m_id {};
-
-public:
-    // grab the next value from the id generator
-    Something() : m_id { s_idGenerator++ }
-    {
-    }
-
-    int getID() const { return m_id; }
+struct Chars {
+  char first{};
+  char second{};
+  char third{};
+  char fourth{};
+  char fifth{};
 };
 
-int main()
-{
-    Something first{};
-    Something second{};
-    Something third{};
-
-    std::cout << first.getID() << '\n';
-    std::cout << second.getID() << '\n';
-    std::cout << third.getID() << '\n';
-    return 0;
-} */
-
-// ###############################################
-
-#include <utility> // for std::pair<T, U>
-
-class Foo {
+class MyClass {
 private:
-  auto m_x{5};           // auto not allowed for non-static members
-  std::pair m_v{1, 2.3}; // CTAD not allowed for non-static members
+  static Chars generate() {
+    Chars c{};     // create an object
+    c.first = 'a'; // fill it with values however you like
+    c.second = 'e';
+    c.third = 'i';
+    c.fourth = 'o';
+    c.fifth = 'u';
 
-  static inline auto s_x{5};           // auto allowed for static members
-  static inline std::pair s_v{1, 2.3}; // CTAD allowed for static members
+    return c; // return the object
+  }
 
 public:
-  Foo() {};
+  static inline Chars s_mychars{
+      generate()}; // copy the returned object into s_mychars
 };
 
 int main() {
-  Foo foo{};
+  std::cout << MyClass::s_mychars.third; // print i
 
   return 0;
 }
