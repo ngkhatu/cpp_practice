@@ -1,92 +1,77 @@
-// Learncpp.com: Section 15.9- Friend classes and friend member functions
-
 /* #include <iostream>
+#include <string>
+#include <string_view>
 
-class Storage {
+class Employee {
 private:
-  int m_nValue{};
-  double m_dValue{};
+  std::string m_name{};
 
 public:
-  Storage(int nValue, double dValue) : m_nValue{nValue}, m_dValue{dValue} {}
-
-  // Make the Display class a friend of Storage
-  friend class Display;
+  Employee(std::string_view name) : m_name{name} {}
+  const std::string &getName() const {
+    return m_name;
+  } //  getter returns by const reference
 };
 
-class Display {
-private:
-  bool m_displayIntFirst{};
-
-public:
-  Display(bool displayIntFirst) : m_displayIntFirst{displayIntFirst} {}
-
-  // Because Display is a friend of Storage, Display members can access the
-  // private members of Storage
-  void displayStorage(const Storage &storage) {
-    if (m_displayIntFirst)
-      std::cout << storage.m_nValue << ' ' << storage.m_dValue << '\n';
-    else // display double first
-      std::cout << storage.m_dValue << ' ' << storage.m_nValue << '\n';
-  }
-
-  void setDisplayIntFirst(bool b) { m_displayIntFirst = b; }
-};
+// createEmployee() returns an Employee by value (which means the returned value
+// is an rvalue)
+Employee createEmployee(std::string_view name) {
+  Employee e{name};
+  return e;
+}
 
 int main() {
-  Storage storage{5, 6.7};
-  Display display{false};
+  // Case 1: okay: use returned reference to member of rvalue class object in
+  // same expression
+  std::cout << createEmployee("Frank").getName() << '\n';
 
-  display.displayStorage(storage);
-
-  display.setDisplayIntFirst(true);
-  display.displayStorage(storage);
+  // Case 2: bad: save returned reference to member of rvalue class object for
+  // use later
+  const std::string &ref{
+      createEmployee("Garbo")
+          .getName()};      // reference becomes dangling when return value of
+                            // createEmployee() is destroyed
+  std::cout << ref << '\n'; // undefined behavior
 
   return 0;
 }
  */
-
-// #################################################################
-
+// ##############################################################
 #include <iostream>
-class Storage;
+#include <string>
+#include <string_view>
 
-class Display {
+class Employee {
 private:
-  bool m_displayIntFirst{};
+  std::string m_name{};
 
 public:
-  Display(bool displayIntFirst) : m_displayIntFirst{displayIntFirst} {}
+  Employee(std::string_view name) : m_name{name} {}
 
-  void displayStorage(const Storage &storage);
+  const std::string &getName() const & {
+    return m_name;
+  } //  & qualifier overloads function to match only lvalue implicit objects
+  std::string getName() const && {
+    return m_name;
+  } // && qualifier overloads function to match only rvalue implicit objects
 };
 
-class Storage {
-private:
-  int m_nValue{};
-  double m_dValue{};
-
-public:
-  Storage(int nValue, double dValue) : m_nValue{nValue}, m_dValue{dValue} {}
-
-  // Make the Display::displayStorage member function a friend of the Storage
-  // class
-  friend void Display::displayStorage(
-      const Storage &storage); // error: Storage hasn't seen the full definition
-                               // of class Display
-};
-
-void Display::displayStorage(const Storage &storage) {
-  if (m_displayIntFirst)
-    std::cout << storage.m_nValue << ' ' << storage.m_dValue << '\n';
-  else // display double first
-    std::cout << storage.m_dValue << ' ' << storage.m_nValue << '\n';
+// createEmployee() returns an Employee by value (which means the returned value
+// is an rvalue)
+Employee createEmployee(std::string_view name) {
+  Employee e{name};
+  return e;
 }
 
 int main() {
-  Storage storage{5, 6.7};
-  Display display{false};
-  display.displayStorage(storage);
+  Employee joe{"Joe"};
+  std::cout << joe.getName()
+            << '\n'; // Joe is an lvalue, so this calls std::string& getName() &
+                     // (returns a reference)
+
+  std::cout << createEmployee("Frank").getName()
+            << '\n'; // Frank is an rvalue, so this calls std::string getName()
+                     // && (makes a copy)
 
   return 0;
 }
