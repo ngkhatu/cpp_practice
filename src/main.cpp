@@ -1,45 +1,21 @@
-// Learncpp.com: Section 16.4- Passing std::vector
 #include <iostream>
 #include <vector>
 
-/* template <typename T> void passByRef(const std::vector<T> &arr) {
-  std::cout << arr[0] << '\n';
-} */
-
-void passByRef(const auto &arr) { std::cout << arr[0] << '\n'; }
-
-/*
-void passByRef(const std::vector<int> &arr) { std::cout << arr[0] << '\n'; }
-
-void passByRef(
-    const std::vector<double>
-        &arr) // compile error: CTAD can't be used to infer function parameters
+std::vector<int> generate() // return by value
 {
-  std::cout << arr[0] << '\n';
-}
- */
-/* void passByRef(const std::vector &arr) // compile error: CTAD can't be used
-to
-                                       // infer function parameters
-{
-  std::cout << arr[0] << '\n';
-} */
-
-template <typename T> void printElement3(const std::vector<T> &arr) {
-  std::cout << arr[3] << '\n';
-  // std::cout << arr.at(3) << '\n';
+  // We're intentionally using a named object here so mandatory copy elision
+  // doesn't apply
+  std::vector arr1{1, 2, 3, 4, 5}; // copies { 1, 2, 3, 4, 5 } into arr1
+  return arr1;
 }
 
 int main() {
-  std::vector primes{2, 3, 5, 7, 11};
-  passByRef(primes); // ok: this is a std::vector<int>
+  std::vector arr2{generate()}; // the return value of generate() dies at the
+                                // end of the expression
 
-  std::vector dbl{1.1, 2.2, 3.3};
-  passByRef(dbl); // compile error: std::vector<double> is not convertible to
-                  //  std::vector<int>
+  // There is no way to use the return value of generate() here
+  arr2[0] = 7; // we only have access to arr2
 
-  std::vector arr{9, 7}; // a 2-element array (valid indexes 0 and 1)
-  printElement3(arr);
-
+  std::cout << arr2[0] << '\n';
   return 0;
 }
