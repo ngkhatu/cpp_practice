@@ -1,21 +1,28 @@
 #include <iostream>
 #include <vector>
 
-std::vector<int> generate() // return by value
-{
-  // We're intentionally using a named object here so mandatory copy elision
-  // doesn't apply
-  std::vector arr1{1, 2, 3, 4, 5}; // copies { 1, 2, 3, 4, 5 } into arr1
-  return arr1;
+// Function template to calculate the average of the values in a std::vector
+template <typename T> T calculateAverage(const std::vector<T> &arr) {
+  std::size_t length{arr.size()};
+
+  T average{0}; // if our array has elements of type T, our average should have
+                // type T too
+  for (std::size_t index{0}; index < length;
+       ++index)            // iterate through all the elements
+    average += arr[index]; // sum up all the elements
+  average /= static_cast<int>(length);
+
+  return average;
 }
 
 int main() {
-  std::vector arr2{generate()}; // the return value of generate() dies at the
-                                // end of the expression
+  std::vector class1{84, 92, 76, 81, 56};
+  std::cout << "The class 1 average is: " << calculateAverage(class1)
+            << '\n'; // calc average of 5 ints
 
-  // There is no way to use the return value of generate() here
-  arr2[0] = 7; // we only have access to arr2
+  std::vector class2{93.2, 88.6, 64.2, 81.0};
+  std::cout << "The class 2 average is: " << calculateAverage(class2)
+            << '\n'; // calc average of 4 doubles
 
-  std::cout << arr2[0] << '\n';
   return 0;
 }
