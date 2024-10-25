@@ -1,27 +1,20 @@
 #include <iostream>
-#include <type_traits> // for std::underlying_type_t
 #include <vector>
 
-enum class StudentNames {
-  kenny,       // 0
-  kyle,        // 1
-  stan,        // 2
-  butters,     // 3
-  cartman,     // 4
-  max_students // 5
-};
-
-// Overload the unary + operator to convert StudentNames to the underlying type
-constexpr auto operator+(StudentNames a) noexcept {
-  return static_cast<std::underlying_type_t<StudentNames>>(a);
+void printCapLen(const std::vector<int> &v) {
+  std::cout << "Capacity: " << v.capacity() << " Length:" << v.size() << '\n';
 }
 
 int main() {
-  std::vector<int> testScores(+StudentNames::max_students);
 
-  testScores[+StudentNames::stan] = 76;
+  std::vector<int> v(1000); // allocate room for 1000 elements
+  printCapLen(v);
 
-  std::cout << "The class has " << +StudentNames::max_students << " students\n";
+  v.resize(0); // resize to 0 elements
+  printCapLen(v);
+
+  v.shrink_to_fit();
+  printCapLen(v);
 
   return 0;
 }
