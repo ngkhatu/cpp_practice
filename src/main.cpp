@@ -1,28 +1,33 @@
+/* #include "SignedArrayView.h"
 #include <iostream>
 #include <vector>
 
-// Function template to calculate the average of the values in a std::vector
-template <typename T> T calculateAverage(const std::vector<T> &arr) {
-  std::size_t length{arr.size()};
+int main() {
+  std::vector arr{9, 7, 5, 3, 1};
+  SignedArrayView sarr{arr}; // Create a signed view of our std::vector
 
-  T average{0}; // if our array has elements of type T, our average should have
-                // type T too
-  for (std::size_t index{0}; index < length;
-       ++index)            // iterate through all the elements
-    average += arr[index]; // sum up all the elements
-  average /= static_cast<int>(length);
+  for (auto index{sarr.ssize() - 1}; index >= 0; --index)
+    std::cout << sarr[index] << ' '; // index using a signed type
 
-  return average;
+  return 0;
 }
+ */
+
+// ######################################
+
+#include <cstddef>
+#include <iostream>
+#include <vector>
+
+using Index = std::ptrdiff_t;
 
 int main() {
-  std::vector class1{84, 92, 76, 81, 56};
-  std::cout << "The class 1 average is: " << calculateAverage(class1)
-            << '\n'; // calc average of 5 ints
+  std::vector arr{9, 7, 5, 3, 1};
 
-  std::vector class2{93.2, 88.6, 64.2, 81.0};
-  std::cout << "The class 2 average is: " << calculateAverage(class2)
-            << '\n'; // calc average of 4 doubles
+  auto length{static_cast<Index>(arr.size())}; // in C++20, prefer std::ssize()
+  for (auto index{length - 1}; index >= 0; --index)
+    std::cout << arr.data()[index]
+              << ' '; // use data() to avoid sign conversion warning
 
   return 0;
 }

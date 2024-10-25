@@ -10,10 +10,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 
-
-
-
 add_executable(Tutorial main.cpp a.cpp)
+
+
+SET(CXXFLAGS "-Wsign-conversion")
+SET(CMAKE_CXX_FLAGS  ${CXXFLAGS})
+
+
+
 
 #[==[
 # specify where the executable target should look for include files
