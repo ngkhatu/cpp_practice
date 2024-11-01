@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(Tutorial)
+project(Learncpp)
 
 
 
@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 
-add_executable(Tutorial main.cpp a.cpp)
+add_executable(Learncpp main.cpp)
 
 
 SET(CXXFLAGS "-Wsign-conversion")
