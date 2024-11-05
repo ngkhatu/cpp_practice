@@ -1,43 +1,40 @@
+#include <algorithm> // for std::sort
 #include <array>
+#include <chrono>  // for std::chrono functions
+#include <cstddef> // for std::size_t
 #include <iostream>
-#include <mdspan>
+#include <numeric> // for std::iota
 
-// An alias template to allow us to define a one-dimensional std::array using
-// two dimensions
-template <typename T, std::size_t Row, std::size_t Col>
-using ArrayFlat2d = std::array<T, Row * Col>;
+const int g_arrayElements{10000};
+
+class Timer {
+private:
+  // Type aliases to make accessing nested type easier
+  using Clock = std::chrono::steady_clock;
+  using Second = std::chrono::duration<double, std::ratio<1>>;
+
+  std::chrono::time_point<Clock> m_beg{Clock::now()};
+
+public:
+  void reset() { m_beg = Clock::now(); }
+
+  double elapsed() const {
+    return std::chrono::duration_cast<Second>(Clock::now() - m_beg).count();
+  }
+};
 
 int main() {
-  // Define a one-dimensional std::array of int (with 3 rows and 4 columns)
-  ArrayFlat2d<int, 3, 4> arr{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+  std::array<int, g_arrayElements> array;
+  std::iota(array.rbegin(), array.rend(),
+            1); // fill the array with values 10000 to 1
 
-  // Define a two-dimensional span into our one-dimensional array
-  // We must pass std::mdspan a pointer to the sequence of elements
-  // which we can do via the data() member function of std::array or std::vector
-  std::mdspan mdView{arr.data(), 3, 4};
+  Timer t;
 
-  // print array dimensions
-  // std::mdspan calls these extents
-  std::size_t rows{mdView.extents().extent(0)};
-  std::size_t cols{mdView.extents().extent(1)};
-  std::cout << "Rows: " << rows << '\n';
-  std::cout << "Cols: " << cols << '\n';
+  std::ranges::sort(array); // Since C++20
+  // If your compiler isn't C++20-capable
+  // std::sort(array.begin(), array.end());
 
-  // print array in 1d
-  // The data_handle() member gives us a pointer to the sequence of elements
-  // which we can then index
-  for (std::size_t i = 0; i < mdView.size(); ++i)
-    std::cout << mdView.data_handle()[i] << ' ';
-  std::cout << '\n';
-
-  // print array in 2d
-  // We use multidimensional [] to access elements
-  for (std::size_t row = 0; row < rows; ++row) {
-    for (std::size_t col = 0; col < cols; ++col)
-      std::cout << mdView[row, col] << ' ';
-    std::cout << '\n';
-  }
-  std::cout << '\n';
+  std::cout << "Time taken: " << t.elapsed() << " seconds\n";
 
   return 0;
 }
