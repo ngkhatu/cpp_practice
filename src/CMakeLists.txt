@@ -17,8 +17,6 @@ SET(CXXFLAGS "-Wsign-conversion")
 SET(CMAKE_CXX_FLAGS  ${CXXFLAGS})
 
 
-
-
 #[==[
 # specify where the executable target should look for include files
 target_include_directories()

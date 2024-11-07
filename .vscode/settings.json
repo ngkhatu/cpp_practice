@@ -1,0 +1,9 @@
+{
+    "cmake.sourceDirectory": "/Users/ngkhatu/Desktop/CPP_Projects/cpp_10-9-2024/src",
+    "cmake.debugConfig": {
+        "args": [
+            "Hello",
+            "world"
+        ]
+    }
+}
