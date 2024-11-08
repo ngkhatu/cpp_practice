@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 
-add_executable(Learncpp main.cpp)
+add_executable(Learncpp main.cpp Cents.cpp)
 
 
 SET(CXXFLAGS "-Wsign-conversion")
